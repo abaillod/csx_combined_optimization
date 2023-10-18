@@ -6,7 +6,10 @@ to optimize tentative designs of the Columbia Stellarator eXperiment (CSX), whic
 
 
 ## Installation
-No installation is required (except simsopt and VMEC2000)
+First, install simsopt and VMEC2000. You might also need to create a `runs` directory manually, by running
+```
+mkdir runs
+```
 
 ## Running the code
 The main script is `combined_csx_optimization_with_windowpane_coils.py`. It can be run locally by creating an input file in the `./inputs` directory - just copy-paste the `inputs/standard_input.py` file into a new
