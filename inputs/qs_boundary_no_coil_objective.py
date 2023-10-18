@@ -23,9 +23,9 @@ inputs['vmec']['dofs']['ntor'] = 2  # In G. Rawlinson input, this was set to VME
 
 inputs['vmec']['target'] = dict()
 inputs['vmec']['target']['aspect_ratio'] = 3.5
-inputs['vmec']['target']['aspect_ratio_weight'] = Weight(1E+1)
+inputs['vmec']['target']['aspect_ratio_weight'] = Weight(1E-1)
 inputs['vmec']['target']['iota'] = -0.2
-inputs['vmec']['target']['iota_weight'] = Weight(1E+2)
+inputs['vmec']['target']['iota_weight'] = Weight(1E-1)
 inputs['vmec']['target']['qa_surface'] = np.array([1]) # Weight for QA is 1.
 inputs['vmec']['target']['qa_ntheta'] = 63
 inputs['vmec']['target']['qa_nphi'] = 64
@@ -81,7 +81,7 @@ inputs['wp_coils']['target']['current_weight'] = Weight(1E-5)
 # NUMERICS
 inputs['numerics'] = dict()
 inputs['numerics']['MAXITER_stage_1'] = 10 # NUmber of iteration for initial stage two optimization
-inputs['numerics']['MAXITER_stage_2'] = 50 # NUmber of iteration for combined optimization
+inputs['numerics']['MAXITER_stage_2'] = 100 # NUmber of iteration for combined optimization
 inputs['numerics']['fndiff_method'] = "forward"
 inputs['numerics']['finite_difference_abs_step'] = 0
 inputs['numerics']['finite_difference_rel_step'] = 1E-5
