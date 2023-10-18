@@ -384,7 +384,7 @@ outputs['WP_max_curvature'] = []
 
 Jqs = QuasisymmetryRatioResidual(
         vmec, inputs['vmec']['target']['qa_surface'], helicity_m=1, helicity_n=0, 
-        ntheta=inputs['vmec']['target']['qa_ntheta'], nphi=inputs['vmec']['target']['qa_nphi'])
+        ntheta=inputs['vmec']['target']['qa_ntheta'], nphi=inputs['vmec']['target']['qa_nphi']
 )
 objective_tuple = [
     (vmec.aspect, inputs['vmec']['target']['aspect_ratio'], inputs['vmec']['target']['aspect_ratio_weight'].value), 
