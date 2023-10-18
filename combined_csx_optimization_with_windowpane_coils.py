@@ -343,7 +343,7 @@ if comm.rank == 0:
             f.write(f"{name}={dof:.2e},  ")
         f.write("\n")
 
-if inputs['numerics']['MAXITER_stage_1'] > 0:
+if inputs['numerics']['MAXITER_stage_1'] > 0 and inputs['coils_objective_weight'].value>0:
     # Run minimization
     options={'maxiter': inputs['numerics']['MAXITER_stage_1'], 'maxcor': 300}
     res = minimize(fun_coils, dofs, jac=True, method='L-BFGS-B', args=({'Nfeval': 0}), options=options, tol=1e-12)
@@ -381,7 +381,11 @@ outputs['WP_msc'] = []
 outputs['IL_max_curvature'] = []
 outputs['WP_max_curvature'] = []
 
-Jqs = QuasisymmetryRatioResidual(vmec, inputs['vmec']['target']['qa_surface'], helicity_m=1, helicity_n=0)
+
+Jqs = QuasisymmetryRatioResidual(
+        vmec, inputs['vmec']['target']['qa_surface'], helicity_m=1, helicity_n=0, 
+        ntheta=inputs['vmec']['target']['qa_ntheta'], nphi=inputs['vmec']['target']['qa_nphi'])
+)
 objective_tuple = [
     (vmec.aspect, inputs['vmec']['target']['aspect_ratio'], inputs['vmec']['target']['aspect_ratio_weight'].value), 
     (Jqs.residuals, 0, 1, 1e+2), 
@@ -411,9 +415,9 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
     J_stage_2 = coils_objective_weight.value * JF.J()
     J = J_stage_1 + J_stage_2
 
-    outputs['J'].append(J)
-    outputs['Jplasma'].append(J_stage_1)
-    outputs['Jcoils'].append(J_stage_2)
+    outputs['J'].append(float(J))
+    outputs['Jplasma'].append(float(J_stage_1))
+    outputs['Jcoils'].append(float(J_stage_2))
         
     if J > inputs['numerics']['JACOBIAN_THRESHOLD'] or np.isnan(J):
         if comm.rank==0:
@@ -459,22 +463,22 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         B_N = np.sum(Bcoil * n, axis=2)
 
         # Save in output arrays
-        outputs['iota_axis'].append(vmec.iota_axis())
-        outputs['iota_edge'].append(vmec.iota_edge())
-        outputs['mean_iota'].append(vmec.mean_iota())
-        outputs['aspect'].append(vmec.aspect())
-        outputs['QSresiduals'].append(Jqs.residuals())
-        outputs['QuadFlux'].append(Jf.J())
-        outputs['BdotN'].append(B_n)
-        outputs['min_CS'].append(Jcsdist.shortest_distance())
-        outputs['min_CC'].append(Jccdist.shortest_distance())
-        outputs['IL_length'].append(il_length.J())
+        outputs['iota_axis'].append(float(vmec.iota_axis()))
+        outputs['iota_edge'].append(float(vmec.iota_edge()))
+        outputs['mean_iota'].append(float(vmec.mean_iota()))
+        outputs['aspect'].append(float(vmec.aspect()))
+        outputs['QSresiduals'].append(np.array(Jqs.residuals()))
+        outputs['QuadFlux'].append(float(Jf.J()))
+        outputs['BdotN'].append(np.array(B_n))
+        outputs['min_CS'].append(float(Jcsdist.shortest_distance()))
+        outputs['min_CC'].append(float(Jccdist.shortest_distance()))
+        outputs['IL_length'].append(float(il_length.J()))
         if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0: 
-            outputs['WP_length'].append([l.J() for l in wp_lengths])
-            outputs['WP_msc'].append([msc.J() for msc in wp_msc])
-            outputs['WP_max_curvature'].append([c.J() for c in wp_curvatures])
-        outputs['IL_msc'].append(il_msc.J())
-        outputs['IL_max_curvature'].append(il_curvature.J())
+            outputs['WP_length'].append([float(l.J()) for l in wp_lengths])
+            outputs['WP_msc'].append([float(msc.J()) for msc in wp_msc])
+            outputs['WP_max_curvature'].append([float(c.J()) for c in wp_curvatures])
+        outputs['IL_msc'].append(float(il_msc.J()))
+        outputs['IL_max_curvature'].append(float(il_curvature.J()))
 
         if np.mod(info['Nfeval'],5)==1 and comm.rank==0:
             with open(os.path.join(this_path, 'outputs.pckl'), 'wb') as f:
