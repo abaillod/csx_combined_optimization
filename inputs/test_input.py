@@ -27,7 +27,8 @@ inputs['vmec']['target']['aspect_ratio_weight'] = Weight(1E+1)
 inputs['vmec']['target']['iota'] = -0.2
 inputs['vmec']['target']['iota_weight'] = Weight(1E+2)
 inputs['vmec']['target']['qa_surface'] = np.linspace(0,1,11,endpoint=True) # Weight for QA is 1.
-
+inputs['vmec']['target']['qa_ntheta'] = 63
+inputs['vmec']['target']['qa_nphi'] = 64
 
 # COILS
 ## Interlinked (IL) and Poloidal field (PF) coils related inputs
