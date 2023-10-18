@@ -72,7 +72,7 @@ if comm.rank == 0:
     os.makedirs(vmec_results_path, exist_ok=True)
     os.makedirs(coils_results_path, exist_ok=True)
 
-std = importlib.import_module(sys.argv[1], package=None)
+std = importlib.import_module('inputs.'+sys.argv[1], package=None)
 inputs = std.inputs
 inputs['directory'] = dir_name
 
