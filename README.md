@@ -20,4 +20,4 @@ sbatch run_combined_approach.sb name_of_your_input
 ```
 
 ## Analysing the output
-To be completed...
+Outputs can be analyzed using the `plot_combined_approach_results.ipynb` jupyter notebook
