@@ -161,17 +161,17 @@ axs[1].set_title('Aspect ratio')
 total = []
 nphi = 64
 ntheta = 63
-ns = 11
+ns = input['vmec']['target']['qa_surface'].size
 profile = np.zeros((ns,nsteps))
 for ii, qs in enumerate(outputs['QSresiduals']):
-    if qs.size==1:
-        if np.isnan(float(qs)):
-            total.append(np.nan)
-            profile[:,ii] = np.nan
-        continue
-    residuals3d = qs.reshape((ns,ntheta,nphi))
-    profile[:,ii] = np.sum(residuals3d * residuals3d, axis=(1, 2))
-    total.append(np.sum(qs * qs))
+    try:
+        residuals3d = qs.reshape((ns,ntheta,nphi))
+        profile[:,ii] = np.sum(residuals3d * residuals3d, axis=(1, 2))
+        total.append(np.sum(qs * qs))
+    except BaseException as e:
+        print(e)
+        profile[:,ii] = np.nan
+        total.append(np.nan)
 axs[2].semilogy(total, label='total')
 for isurf in range(0,ns):
     axs[2].semilogy(profile[isurf,:],label=f'surf {isurf}')
