@@ -534,6 +534,7 @@ vmec.boundary.fixed_range(
     -inputs['vmec']['dofs']['ntor'], inputs['vmec']['dofs']['ntor'], 
     fixed=False
 )
+vmec.boundary.fix('rc(0,0)') # We want to keep major radius fixed.
 
 dofs = np.concatenate((JF.x, vmec.x))
 ndof_vmec = int(len(vmec.boundary.x))
