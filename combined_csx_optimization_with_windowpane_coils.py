@@ -64,7 +64,6 @@ hms = f'{date.now().year}{date.now().month}{date.now().day}' +\
 
 std = importlib.import_module(sys.argv[1], package=None)
 inputs = std.inputs
-inputs['directory'] = dir_name
 
 if 'directory' in inputs.keys():
     dir_name = inputs['directory']
