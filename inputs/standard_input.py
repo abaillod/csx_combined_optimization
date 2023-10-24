@@ -9,6 +9,7 @@ inputs['CS_THRESHOLD'] = 0.06                # Minimum coil to surface distance
 inputs['CS_WEIGHT'] = Weight(1E-1)           # Weight on coil-surface penalty
 inputs['CC_THRESHOLD'] = 0.1                 # Minimum coil to coil distance
 inputs['CC_WEIGHT'] = Weight(1E-1)           # Weight on coil-coil distance
+inputs['directory'] = 'runs/test_dir'        # Name of output directory
 
 # SURFACE
 inputs['vmec'] = dict()

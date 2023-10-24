@@ -61,9 +61,18 @@ print('parent_path: ',parent_path)
 date = datetime.datetime
 hms = f'{date.now().year}{date.now().month}{date.now().day}' +\
       f'_{date.now().hour}{date.now().minute}{date.now().second}'
-dir_name = 'runs/' + date.now().isoformat(timespec='seconds') + '/'
+
+std = importlib.import_module(sys.argv[1], package=None)
+inputs = std.inputs
+inputs['directory'] = dir_name
+
+if 'directory' in inputs.keys():
+    dir_name = inputs['directory']
+else:
+    dir_name = 'runs/' + date.now().isoformat(timespec='seconds') + '/'
+
 if comm.rank == 0: 
-    os.mkdir(dir_name)
+    os.makedirs(dir_name, exist_ok=True)
 
 this_path = os.path.join(parent_path, dir_name)
 vmec_results_path = os.path.join(this_path, "vmec")
@@ -71,10 +80,6 @@ coils_results_path = os.path.join(this_path, "coils")
 if comm.rank == 0: 
     os.makedirs(vmec_results_path, exist_ok=True)
     os.makedirs(coils_results_path, exist_ok=True)
-
-std = importlib.import_module('inputs.'+sys.argv[1], package=None)
-inputs = std.inputs
-inputs['directory'] = dir_name
 
 # Save input
 if comm.rank == 0: 
