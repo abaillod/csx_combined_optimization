@@ -18,8 +18,6 @@ inputs['vmec']['nphi'] = 34
 inputs['vmec']['ntheta'] = 34
 
 inputs['vmec']['dofs'] = dict()
-inputs['vmec']['dofs']['mpol'] = 2  # In G. Rawlinson input, this was set to VMEC resolution
-inputs['vmec']['dofs']['ntor'] = 2  # In G. Rawlinson input, this was set to VMEC resolution
 
 inputs['vmec']['target'] = dict()
 inputs['vmec']['target']['aspect_ratio'] = 3.5
@@ -38,8 +36,8 @@ inputs['cnt_coils']['geometry']['filename'] = 'flux_100_bs_cssc_cssc.json'
 
 inputs['cnt_coils']['dofs'] = dict()
 inputs['cnt_coils']['dofs']['IL_order'] = 2 # In G. Rawlinson input, this was 7
-inputs['cnt_coils']['dofs']['IL_geometry_free'] = True
-inputs['cnt_coils']['dofs']['PF_current_free'] = True
+inputs['cnt_coils']['dofs']['IL_geometry_free'] = False
+inputs['cnt_coils']['dofs']['PF_current_free'] = False
 
 inputs['cnt_coils']['target'] = dict()
 inputs['cnt_coils']['target']['IL_length'] = 3.3
@@ -83,8 +81,7 @@ inputs['numerics'] = dict()
 inputs['numerics']['MAXITER_stage_1'] = 10 # NUmber of iteration for initial stage two optimization
 inputs['numerics']['MAXITER_stage_2'] = 100 # NUmber of iteration for combined optimization
 inputs['numerics']['fndiff_method'] = "forward"
-inputs['numerics']['finite_difference_abs_step'] = 0
+inputs['numerics']['finite_difference_abs_step'] = 1E-6
 inputs['numerics']['finite_difference_rel_step'] = 1E-5
 inputs['numerics']['JACOBIAN_THRESHOLD'] = 1000 # In G Rawlinson input, this was set to 1E2
 
-# OVERWRITTEN INPUTS BELOW

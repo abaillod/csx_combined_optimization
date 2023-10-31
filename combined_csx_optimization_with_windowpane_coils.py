@@ -39,9 +39,9 @@ from simsopt.geo.windowpanecurve import WindowpaneCurveXYZFourier
 from simsopt.field.coilobjective import CurrentPenalty
 from simsopt.field.coil import apply_symmetries_to_currents, ScaledCurrent
 from simsopt.field.coil import Coil
+from set_default_values import set_default
 
 run_name = "test_0.0.0" # just a friendly name for the log output
-
 
 # Setup MPI
 comm = MPI.COMM_WORLD
@@ -64,6 +64,7 @@ hms = f'{date.now().year}{date.now().month}{date.now().day}' +\
 
 std = importlib.import_module(sys.argv[1], package=None)
 inputs = std.inputs
+set_default(inputs)
 
 if 'directory' in inputs.keys():
     dir_name = inputs['directory']
@@ -82,7 +83,7 @@ if comm.rank == 0:
 
 # Save input
 if comm.rank == 0: 
-    with open(dir_name + 'input.pckl', 'wb') as f:
+    with open(os.path.join(this_path, 'input.pckl'), 'wb') as f:
         pickle.dump(inputs, f)
 
 def print_dict_recursive(file, d, order=0, k=None):
@@ -90,7 +91,7 @@ def print_dict_recursive(file, d, order=0, k=None):
         for k, i in d.items():
             if type(i) is dict:
                 for l in range(order):
-                    file.write('\n/')
+                    file.write('\n')
                 for l in range(order):
                     file.write('#')
                 if order>0:
@@ -100,11 +101,11 @@ def print_dict_recursive(file, d, order=0, k=None):
             file.write(f' \n')
     else:
         for l in range(order-1):
-            file.write('/')
+            file.write('')
         file.write(f'{k} = {d}')
 
 if comm.rank == 0: 
-    with open(dir_name + 'input.txt', 'w') as f:
+    with open(os.path.join(this_path, 'input.txt'), 'w') as f:
         print_dict_recursive(f, inputs)
 
 
@@ -129,9 +130,12 @@ vmec = Vmec(
     nphi=inputs['vmec']['nphi'], 
     ntheta=inputs['vmec']['nphi']
 )
+vmec.indata.mpol = inputs['vmec']['internal_mpol'] 
+vmec.indata.ntor = inputs['vmec']['internal_ntor'] 
+
 surf = vmec.boundary
 
-# Load CNT initial coils. Extract the base curves and currents.
+#Load CNT initial coils. Extract the base curves and currents.
 cnt_initial_coils = load( inputs['cnt_coils']['geometry']['filename'] )
 il_base_coil = cnt_initial_coils.coils[0]
 il_coils = cnt_initial_coils.coils[0:2]
@@ -384,7 +388,10 @@ outputs['IL_msc'] = []
 outputs['WP_msc'] = []
 outputs['IL_max_curvature'] = []
 outputs['WP_max_curvature'] = []
-
+outputs['vmec'] = dict()
+outputs['vmec']['fsqr'] = []
+outputs['vmec']['fsqz'] = []
+outputs['vmec']['fsql'] = []
 
 Jqs = QuasisymmetryRatioResidual(
         vmec, inputs['vmec']['target']['qa_surface'], helicity_m=1, helicity_n=0, 
@@ -410,6 +417,8 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
     JF.x = dofs[:-ndof_vmec]
     prob.x = dofs[-ndof_vmec:]
 
+    coils_objective = (JF.x.size>0)
+
     # Update surface
     bs.set_points(surf.gamma().reshape((-1, 3)))
 
@@ -422,6 +431,9 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
     outputs['J'].append(float(J))
     outputs['Jplasma'].append(float(J_stage_1))
     outputs['Jcoils'].append(float(J_stage_2))
+    outputs['vmec']['fsqr'].append(vmec.wout.fsqr)
+    outputs['vmec']['fsqz'].append(vmec.wout.fsqz)
+    outputs['vmec']['fsql'].append(vmec.wout.fsql)
         
     if J > inputs['numerics']['JACOBIAN_THRESHOLD'] or np.isnan(J):
         if comm.rank==0:
@@ -505,7 +517,8 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
     
         # Evaluate Jacobian - this is some magic math copied from Rogerio's code
         prob_dJ = prob_jacobian.jac(prob.x) # finite differences
-        coils_dJ = JF.dJ() # Analytical
+        if coils_objective:
+            coils_dJ = JF.dJ() # Analytical
 
         assert Jf.definition == "local"
     
@@ -517,7 +530,8 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         mixed_dJ = Derivative({surf: deriv})(surf)
     
         ## Put both gradients together
-        grad_with_respect_to_coils = coils_objective_weight.value * coils_dJ
+        if coils_objective:
+            grad_with_respect_to_coils = coils_objective_weight.value * coils_dJ
         grad_with_respect_to_surface = np.ravel(prob_dJ) + coils_objective_weight.value * mixed_dJ
 
     
@@ -525,7 +539,10 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         with open(os.path.join(this_path,'simsopt_single_stage_metric.txt'), 'w') as f:
             f.write(outstr)
     
-    grad = np.concatenate((grad_with_respect_to_coils, grad_with_respect_to_surface))
+    if coils_objective:
+        grad = np.concatenate((grad_with_respect_to_coils, grad_with_respect_to_surface))
+    else:
+        grad = grad_with_respect_to_surface
 
     return J, grad
 

@@ -10,9 +10,9 @@ MPOL = 8
 NTOR = 8
 NTHETA = 24
 NZETA = 120
-NS_ARRAY    =      5     32     49
-NITER_ARRAY =   1250   5000  10000
-FTOL_ARRAY  =  1e-06  1e-10  1e-12
+NS_ARRAY    =      5     32     49    99 
+NITER_ARRAY =   1250   5000  10000 10000
+FTOL_ARRAY  =  1e-06  1e-10  1e-12 1e-12
 
 ! ---- Boundary toroidal flux ----
 PHIEDGE = 0.01444
