@@ -153,3 +153,5 @@ def set_default(inputs):
         inputs['numerics']['finite_difference_rel_step'] = 1E-5
     if 'JACOBIAN_THRESHOLD' not in inputs['numerics'].keys():
         inputs['numerics']['JACOBIAN_THRESHOLD'] = 100
+    if 'algorithm' not in inputs['numerics'].keys():
+        inputs['numerics']['algorithm'] = 'BFGS'

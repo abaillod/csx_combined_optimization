@@ -40,8 +40,7 @@ from simsopt.field.coilobjective import CurrentPenalty
 from simsopt.field.coil import apply_symmetries_to_currents, ScaledCurrent
 from simsopt.field.coil import Coil
 from set_default_values import set_default
-
-run_name = "test_0.0.0" # just a friendly name for the log output
+from simsopt.solve import least_squares_mpi_solve
 
 # Setup MPI
 comm = MPI.COMM_WORLD
@@ -114,7 +113,7 @@ if comm.rank == 0:
 # --------------------------------
 
 outstr  = "=============== COMBINED OPTIMIZATION OF CSX ===============\n"
-outstr += f"Attempt name is ~~{run_name}~~...\n"
+outstr += f"THIS IS CSX COMBINED OPTIMIZATION\n"
 outstr += f"Date = {date.date(date.now()).isoformat()} at {date.now().strftime('%Hh%M')}\n"
 outstr += "\n\n"
 if comm.rank == 0: 
@@ -284,6 +283,7 @@ JF = add_penalty( JF,
     inputs['CS_WEIGHT']
 )
 
+coils_objective = (JF.x.size>0)
 def fun_coils(dofs, info):
     info['Nfeval'] += 1
     JF.x = dofs
@@ -344,6 +344,7 @@ for c in wp_base_currents:
     c.unfix_all()
 
 # Save initial degrees of freedom
+print(JF.dof_names)
 dofs = JF.x
 if comm.rank == 0: 
     with open(os.path.join(this_path,'log.txt'), 'a') as f:
@@ -351,7 +352,7 @@ if comm.rank == 0:
             f.write(f"{name}={dof:.2e},  ")
         f.write("\n")
 
-if inputs['numerics']['MAXITER_stage_1'] > 0 and inputs['coils_objective_weight'].value>0:
+if inputs['numerics']['MAXITER_stage_1'] > 0 and coils_objective:
     # Run minimization
     options={'maxiter': inputs['numerics']['MAXITER_stage_1'], 'maxcor': 300}
     res = minimize(fun_coils, dofs, jac=True, method='L-BFGS-B', args=({'Nfeval': 0}), options=options, tol=1e-12)
@@ -368,6 +369,10 @@ if inputs['numerics']['MAXITER_stage_1'] > 0 and inputs['coils_objective_weight'
 # =================================================================================================
 # FULL COMBINED APPROACH
 # ----------------------
+
+if inputs['numerics']['MAXITER_stage_2'] == 0:
+    sys.exit()
+
 # We now include both the coil penalty and the plasma target functions
 outputs = dict()
 outputs['J'] = []
@@ -399,14 +404,17 @@ Jqs = QuasisymmetryRatioResidual(
 )
 objective_tuple = [
     (vmec.aspect, inputs['vmec']['target']['aspect_ratio'], inputs['vmec']['target']['aspect_ratio_weight'].value), 
-    (Jqs.residuals, 0, 1, 1e+2), 
+    (Jqs.residuals, 0, 1), 
     (vmec.mean_iota, inputs['vmec']['target']['iota'], inputs['vmec']['target']['iota_weight'].value )
 ]
 prob = LeastSquaresProblem.from_tuples(objective_tuple)
 
 # Define target function
 JACOBIAN_THRESHOLD = inputs['numerics']['JACOBIAN_THRESHOLD']
+
 def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
+    if not coils_objective:
+        raise ValueError('fun should not be used when doing stage one!')
     info['Nfeval'] += 1
     coils_objective_weight = inputs['coils_objective_weight']
     
@@ -416,8 +424,6 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
     # Separate coils dofs from surface dofs
     JF.x = dofs[:-ndof_vmec]
     prob.x = dofs[-ndof_vmec:]
-
-    coils_objective = (JF.x.size>0)
 
     # Update surface
     bs.set_points(surf.gamma().reshape((-1, 3)))
@@ -464,7 +470,7 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         outstr += "VMEC FAILED"
     
     else:
-        # Evaluate important metrics        
+        # Evaluate important metrics    
         n = surf.normal()
         absn = np.linalg.norm(n, axis=2)
         nphi_VMEC = surf.quadpoints_phi.size
@@ -513,34 +519,31 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
             for i, (l, msc, jcs) in enumerate(zip(outputs['WP_length'][-1], outputs['WP_msc'][-1], outputs['WP_max_curvature'][-1])):
                 outstr += f"WP_{i:02.0f} length={l:.2f}, ∫ϰ²/L={msc:.2f}, ∫max(ϰ-ϰ0,0)^2={jcs:.2f}\n" 
-            outstr += f"\n"
+        outstr += f"\n"
+            
+        if comm.rank==0:
+            with open(os.path.join(this_path,'simsopt_single_stage_metric.txt'), 'a') as f:
+                f.write(outstr)
     
         # Evaluate Jacobian - this is some magic math copied from Rogerio's code
         prob_dJ = prob_jacobian.jac(prob.x) # finite differences
-        if coils_objective:
-            coils_dJ = JF.dJ() # Analytical
+        coils_dJ = JF.dJ() # Analytical
 
         assert Jf.definition == "local"
-    
+
         # Evaluate how Jcoil varies w.r.t the surface dofs
         dJdx = (B_n/mod_Bcoil**2)[:, :, None] * (np.sum(dB_by_dX*(n-B*(B_N/mod_Bcoil**2)[:, :, None])[:, :, None, :], axis=3))
         dJdN = (B_n/mod_Bcoil**2)[:, :, None] * B_diff - 0.5 * (B_N**2/absn**3/mod_Bcoil**2)[:, :, None] * n
         deriv = surf.dnormal_by_dcoeff_vjp(dJdN/(nphi_VMEC*ntheta_VMEC)) \
               + surf.dgamma_by_dcoeff_vjp(dJdx/(nphi_VMEC*ntheta_VMEC))
         mixed_dJ = Derivative({surf: deriv})(surf)
-    
+
         ## Put both gradients together
-        if coils_objective:
-            grad_with_respect_to_coils = coils_objective_weight.value * coils_dJ
+        grad_with_respect_to_coils = coils_objective_weight.value * coils_dJ
         grad_with_respect_to_surface = np.ravel(prob_dJ) + coils_objective_weight.value * mixed_dJ
 
-    
-    if comm.rank==0:
-        with open(os.path.join(this_path,'simsopt_single_stage_metric.txt'), 'w') as f:
-            f.write(outstr)
-    
     if coils_objective:
-        grad = np.concatenate((grad_with_respect_to_coils, grad_with_respect_to_surface))
+        grad = np.concatenate((grad_with_respect_to_coils,grad_with_respect_to_surface))
     else:
         grad = grad_with_respect_to_surface
 
@@ -582,37 +585,40 @@ if comm.rank==0:
 
 outputs['result'] = None
 
-with MPIFiniteDifference(prob.objective, mpi, diff_method=diff_method, abs_step=finite_difference_abs_step, rel_step=finite_difference_rel_step) as prob_jacobian:
-    if mpi.proc0_world:
-        outputs['result'] = minimize(
-                fun, dofs, args=(prob_jacobian, {'Nfeval': 0}), jac=True, method='BFGS', 
-                options={'maxiter': inputs['numerics']['MAXITER_stage_2']}, tol=1e-15
-                )
-
-if comm.rank == 0:
-    res = outputs['result']
-    with open(os.path.join(this_path,'log.txt'), 'a') as f:
-        f.write(f"Number of iterations: {res.nit}\n")
-        f.write(f"Number of function evaluations: {res.nfev}\n")
-        f.write(f"Optimization status: {res.status}\n")
-        f.write(f"Final function value: {res.fun}\n")
-        f.write(f"Final gradient: {res.jac}\n" )
-        f.write(f"\n")
-        
-        f.write(f"Aspect ratio after optimization: {vmec.aspect()}\n")
-        f.write(f"Mean iota after optimization: {vmec.mean_iota()}\n")
-        f.write(f"Quasisymmetry objective after optimization: {Jqs.total()}\n")
-        f.write(f"Magnetic well after optimization: {vmec.vacuum_well()}\n")
-        f.write(f"Squared flux after optimization: {Jf.J()}\n")
-
-        for j, coil in enumerate(base_coils):
-            f.write(f"Current for coil {j}: {coil.current.get_value()}\n")
+if coils_objective:
+    with MPIFiniteDifference(prob.objective, mpi, diff_method=diff_method, abs_step=finite_difference_abs_step, rel_step=finite_difference_rel_step) as prob_jacobian:
+        if mpi.proc0_world:
+            outputs['result'] = minimize(
+                    fun, dofs, args=(prob_jacobian, {'Nfeval': 0}), jac=True, method='BFGS', 
+                    options={'maxiter': inputs['numerics']['MAXITER_stage_2']}, tol=1e-15
+                    )
+            if comm.rank == 0:
+                res = outputs['result']
+                with open(os.path.join(this_path,'log.txt'), 'a') as f:
+                    f.write(f"Number of iterations: {res.nit}\n")
+                    f.write(f"Number of function evaluations: {res.nfev}\n")
+                    f.write(f"Optimization status: {res.status}\n")
+                    f.write(f"Final function value: {res.fun}\n")
+                    f.write(f"Final gradient: {res.jac}\n" )
+                    f.write(f"\n")
+                    
+                    f.write(f"Aspect ratio after optimization: {vmec.aspect()}\n")
+                    f.write(f"Mean iota after optimization: {vmec.mean_iota()}\n")
+                    f.write(f"Quasisymmetry objective after optimization: {Jqs.total()}\n")
+                    f.write(f"Magnetic well after optimization: {vmec.vacuum_well()}\n")
+                    f.write(f"Squared flux after optimization: {Jf.J()}\n")
             
-        f.write("\n")
+                    for j, coil in enumerate(base_coils):
+                        f.write(f"Current for coil {j}: {coil.current.get_value()}\n")
+                        
+                    f.write("\n")
 
-    with open(os.path.join(this_path, 'outputs.pckl'), 'wb') as f:
-        pickle.dump( outputs, f )
-        
+        with open(os.path.join(this_path, 'outputs.pckl'), 'wb') as f:
+            pickle.dump( outputs, f )
+ 
+else:
+    least_squares_mpi_solve(prob, mpi, grad=True, rel_step=1e-5, abs_step=1e-8, max_nfev=inputs['numerics']['MAXITER_stage_2'])
+            
     # Save output
     coils_to_vtk( full_coils, os.path.join(coils_results_path, "coils_output") )
     surf_to_vtk( os.path.join(coils_results_path, "surf_output"), bs, surf )
