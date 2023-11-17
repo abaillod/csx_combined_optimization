@@ -9,11 +9,11 @@ inputs['CS_THRESHOLD'] = 0.08
 inputs['CS_WEIGHT'] = Weight(0)
 inputs['CC_THRESHOLD'] = 0.08
 inputs['CC_WEIGHT'] = Weight(0)
-inputs['directory'] = 'runs/stage_1_mpol=ntor=3'
+inputs['directory'] = 'runs/stage_1_mpol=ntor=3_constrained'
 
 # SURFACE
 inputs['vmec'] = dict()
-inputs['vmec']['filename'] = 'runs/stage_1_mpol=ntor=2/input.final' 
+inputs['vmec']['filename'] = 'runs/stage_1_mpol=ntor=2_constrained/input.final' 
 #inputs['vmec']['filename'] = 'vmec_inputs/input.tokamak' 
 inputs['vmec']['verbose'] = False
 inputs['vmec']['nphi'] = 34
@@ -26,10 +26,12 @@ inputs['vmec']['dofs']['mpol'] = 3
 inputs['vmec']['dofs']['ntor'] = 3
 
 inputs['vmec']['target'] = dict()
-inputs['vmec']['target']['aspect_ratio'] = 3.5
-inputs['vmec']['target']['aspect_ratio_weight'] = Weight(1)
-inputs['vmec']['target']['iota'] = -0.23
-inputs['vmec']['target']['iota_weight'] = Weight(1)
+inputs['vmec']['target']['aspect_ratio'] = 2
+inputs['vmec']['target']['aspect_ratio_weight'] = Weight(1e3)
+inputs['vmec']['target']['aspect_ratio_constraint_type'] = 'max'               # Identity for target, max or min for constraint
+inputs['vmec']['target']['iota'] = -0.18
+inputs['vmec']['target']['iota_weight'] = Weight(1e3)
+inputs['vmec']['target']['iota_constraint_type'] = 'max'               # Identity for target, max or min for constraint
 inputs['vmec']['target']['qa_surface'] = np.array([0.25, 0.5, 0.75, 1]) # Weight for QA is 1.
 inputs['vmec']['target']['qa_ntheta'] = 63
 inputs['vmec']['target']['qa_nphi'] = 64

@@ -25,8 +25,10 @@ inputs['vmec']['dofs']['ntor'] = 2 # VMEC boundary dofs with |n|<= ntor will be 
 inputs['vmec']['target'] = dict()
 inputs['vmec']['target']['aspect_ratio'] = 3.5                             # Target value for boundary aspect ratio
 inputs['vmec']['target']['aspect_ratio_weight'] = Weight(1E+1)             # Weight for aspect ratio target
+inputs['vmec']['target']['aspect_ratio_constraint_type'] = 'identity'               # Identity for target, max or min for constraint
 inputs['vmec']['target']['iota'] = -0.2                                    # Target value for mean iota
 inputs['vmec']['target']['iota_weight'] = Weight(1E+2)                     # Weight for iota target
+inputs['vmec']['target']['iota_constraint_type'] = 'identity'               # Identity for target, max or min for constraint
 inputs['vmec']['target']['qa_surface'] = np.linspace(0,1,11,endpoint=True) # Weight for QA is 1.
 inputs['vmec']['target']['qa_ntheta'] = 63                                 # Poloidal resolution for QS surfaces
 inputs['vmec']['target']['qa_nphi'] = 64                                   # Toroidal resolution for QS surfaces

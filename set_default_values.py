@@ -44,10 +44,14 @@ def set_default(inputs):
         inputs['vmec']['target']['aspect_ratio'] = 3.5 
     if 'aspect_ratio_weight' not in inputs['vmec']['target'].keys():
         inputs['vmec']['target']['aspect_ratio_weight'] = Weight(1) 
+    if 'aspect_ratio_constraint_type' not in inputs['vmec']['target'].keys():
+        inputs['vmec']['target']['aspect_ratio_constraint_type'] = 'identity'
     if 'iota' not in inputs['vmec']['target'].keys():
         inputs['vmec']['target']['iota'] = -0.2 
     if 'iota_weight' not in inputs['vmec']['target'].keys():
         inputs['vmec']['target']['iota_weight'] = Weight(1) 
+    if 'iota_constraint_type' not in inputs['vmec']['target'].keys():
+        inputs['vmec']['target']['iota_constraint_type'] = 'identity'
     if 'qa_surface' not in inputs['vmec']['target'].keys():
         inputs['vmec']['target']['qa_surface'] = np.array([1]) 
     if 'qa_ntheta' not in inputs['vmec']['target'].keys():
