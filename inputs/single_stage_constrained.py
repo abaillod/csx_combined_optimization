@@ -4,12 +4,12 @@ import numpy as np
 # User inputs
 # ===========
 inputs = dict()
-inputs['coils_objective_weight'] = Weight(0)
+inputs['coils_objective_weight'] = Weight(1e2)
 inputs['CS_THRESHOLD'] = 0.08
-inputs['CS_WEIGHT'] = Weight(0)
+inputs['CS_WEIGHT'] = Weight(1)
 inputs['CC_THRESHOLD'] = 0.08
-inputs['CC_WEIGHT'] = Weight(0)
-inputs['directory'] = 'runs/stage_1_mpol=ntor=3_constrained_2'
+inputs['CC_WEIGHT'] = Weight(1)
+inputs['directory'] = 'runs/single_stage_constrained_optimization_002'
 
 # SURFACE
 inputs['vmec'] = dict()
@@ -22,8 +22,8 @@ inputs['vmec']['internal_mpol'] = 5
 inputs['vmec']['internal_ntor'] = 5
 
 inputs['vmec']['dofs'] = dict()
-inputs['vmec']['dofs']['mpol'] = 3
-inputs['vmec']['dofs']['ntor'] = 3
+inputs['vmec']['dofs']['mpol'] = 2
+inputs['vmec']['dofs']['ntor'] = 2
 
 inputs['vmec']['target'] = dict()
 inputs['vmec']['target']['aspect_ratio'] = 2
@@ -44,18 +44,19 @@ inputs['cnt_coils']['geometry']['filename'] = 'flux_100_bs_cssc_cssc.json'
 
 inputs['cnt_coils']['dofs'] = dict()
 inputs['cnt_coils']['dofs']['IL_order'] = 2 # In G. Rawlinson input, this was 7
-inputs['cnt_coils']['dofs']['IL_geometry_free'] = False
-inputs['cnt_coils']['dofs']['PF_current_free'] = False
+inputs['cnt_coils']['dofs']['IL_geometry_free'] = True
+inputs['cnt_coils']['dofs']['PF_current_free'] = True
 
 inputs['cnt_coils']['target'] = dict()
-inputs['cnt_coils']['target']['IL_length'] = 3.3
-inputs['cnt_coils']['target']['IL_length_weight'] = Weight(0)
+inputs['cnt_coils']['target']['IL_length'] = 3
+inputs['cnt_coils']['target']['IL_length_weight'] = Weight(1)
+inputs['cnt_coils']['target']['IL_length_constraint_type'] = 'max'
 inputs['cnt_coils']['target']['IL_msc_threshold'] = 10
 inputs['cnt_coils']['target']['IL_msc_weight'] = Weight(0)
-inputs['cnt_coils']['target']['IL_maxc_threshold'] = 7
-inputs['cnt_coils']['target']['IL_maxc_weight'] = Weight(0)
+inputs['cnt_coils']['target']['IL_maxc_threshold'] = 20
+inputs['cnt_coils']['target']['IL_maxc_weight'] = Weight(1)
 inputs['cnt_coils']['target']['PF_current_threshold'] = 1E6 
-inputs['cnt_coils']['target']['PF_current_weight'] = Weight(0)
+inputs['cnt_coils']['target']['PF_current_weight'] = Weight(1)
 
 ## Windowpane coils related inputs
 inputs['wp_coils'] = dict()
@@ -76,6 +77,7 @@ inputs['wp_coils']['dofs']['planar'] = True # Enforce coils to remain planar if 
 inputs['wp_coils']['target'] = dict()
 inputs['wp_coils']['target']['length'] = inputs['cnt_coils']['target']['IL_length'] / 3
 inputs['wp_coils']['target']['length_weight'] = Weight(0)
+inputs['wp_coils']['target']['length_constraint_type'] = 'max'
 inputs['wp_coils']['target']['msc_threshold'] = 20
 inputs['wp_coils']['target']['msc_weight'] = Weight(0)
 inputs['wp_coils']['target']['maxc_threshold'] = 50
@@ -86,11 +88,11 @@ inputs['wp_coils']['target']['current_weight'] = Weight(0)
 
 # NUMERICS
 inputs['numerics'] = dict()
-inputs['numerics']['MAXITER_stage_1'] = 0 # NUmber of iteration for initial stage two optimization
-inputs['numerics']['MAXITER_stage_2'] = 100 # NUmber of iteration for combined optimization
+inputs['numerics']['MAXITER_stage_1'] = 100 # NUmber of iteration for initial stage two optimization
+inputs['numerics']['MAXITER_stage_2'] = 250 # NUmber of iteration for combined optimization
 inputs['numerics']['fndiff_method'] = "forward"
 inputs['numerics']['finite_difference_abs_step'] = 1E-8
 inputs['numerics']['finite_difference_rel_step'] = 1E-5
-inputs['numerics']['JACOBIAN_THRESHOLD'] = 1000 # In G Rawlinson input, this was set to 1E2
+inputs['numerics']['JACOBIAN_THRESHOLD'] = 1e9 # In G Rawlinson input, this was set to 1E2
 inputs['numerics']['algorithm'] = 'BFGS'
 

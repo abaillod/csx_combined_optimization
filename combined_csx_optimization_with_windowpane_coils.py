@@ -136,6 +136,9 @@ vmec = Vmec(
 vmec.indata.mpol = inputs['vmec']['internal_mpol'] 
 vmec.indata.ntor = inputs['vmec']['internal_ntor'] 
 
+# Save initial vmec
+vmec.write_input(os.path.join(this_path, f'input.initial'))
+
 surf = vmec.boundary
 
 #Load CNT initial coils. Extract the base curves and currents.
@@ -240,7 +243,7 @@ def add_penalty( JF, newJ, w ):
 # IL penalties
 il_length = CurveLength( il_base_curve )
 JF = add_penalty( JF,
-    QuadraticPenalty( il_length, inputs['cnt_coils']['target']['IL_length'], f='max' ), 
+    QuadraticPenalty( il_length, inputs['cnt_coils']['target']['IL_length'], f=inputs['cnt_coils']['target']['IL_length_constraint_type'] ), 
     inputs['cnt_coils']['target']['IL_length_weight'] 
 )
 
@@ -260,7 +263,7 @@ JF = add_penalty( JF,
 if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
     wp_lengths = [CurveLength( c ) for c in wp_base_curves]
     JF = add_penalty( JF,
-        sum([QuadraticPenalty( wpl, inputs['wp_coils']['target']['length'], f='max') for wpl in wp_lengths]),
+        sum([QuadraticPenalty( wpl, inputs['wp_coils']['target']['length'], f=inputs['wp_coils']['target']['length_constraint_type ']) for wpl in wp_lengths]),
         inputs['wp_coils']['target']['length_weight']
     )
     
@@ -407,25 +410,70 @@ qs = QuasisymmetryRatioResidual(
         ntheta=inputs['vmec']['target']['qa_ntheta'], nphi=inputs['vmec']['target']['qa_nphi']
 )
 
-# nonlinear constraints for iota and aspect ratio
-if inputs['vmec']['target']['aspect_ratio_constraint_type']=='identity':
-    aspect_tuple = (vmec.aspect, inputs['vmec']['target']['aspect_ratio'], inputs['vmec']['target']['aspect_ratio'])
-elif inputs['vmec']['target']['aspect_ratio_constraint_type']=='max':
-    aspect_tuple = (vmec.aspect, 0, inputs['vmec']['target']['aspect_ratio'])
-elif inputs['vmec']['target']['aspect_ratio_constraint_type']=='min':
-    aspect_tuple = (vmec.aspect, inputs['vmec']['target']['aspect_ratio'], np.inf)
+class remake_iota(Optimizable):
+    def __init__(self, vmec):
+        self.vmec = vmec
+        super().__init__(depends_on=[vmec])
+    def J(self):
+        "returns the value of the quantity"
+        try:
+            return self.vmec.mean_iota()
+        except ObjectiveFailure: 
+            with open(os.path.join(this_path, 'log.txt'), 'a') as f:
+                f.write(f"Error evaluating iota! ")
+            return np.nan
 
-if inputs['vmec']['target']['iota_constraint_type']=='identity':
-    iota_tuple = (vmec.mean_iota, inputs['vmec']['target']['iota'], inputs['vmec']['target']['iota'])
-elif inputs['vmec']['target']['iota_constraint_type']=='max':
-    iota_tuple = (vmec.mean_iota, -np.inf, inputs['vmec']['target']['iota'])
-elif inputs['vmec']['target']['iota_constraint_type']=='min':
-    iota_tuple = (vmec.mean_iota, inputs['vmec']['target']['iota'], np.inf)
+class remake_aspect(Optimizable):
+    def __init__(self, vmec):
+        self.vmec = vmec
+        super().__init__(depends_on=[vmec])
+    def J(self):
+        "returns value of quantity"
+        try: 
+            return self.vmec.aspect()
+        except ObjectiveFailure: 
+            with open(os.path.join(this_path, 'log.txt'), 'a') as f:
+                f.write(f"Error evaluating aspect ratio! ")
+            return np.nan
 
-tuples_nlc = [aspect_tuple, iota_tuple]
+class quasisymmetry(Optimizable):
+    def __init__(self, qs):
+        self.qs = qs 
+        super().__init__(depends_on=[qs])
+    def J(self):
+        "returns value of quantity" 
+        try:
+            return self.qs.total()
+        except ObjectiveFailure: 
+            with open(os.path.join(this_path, 'log.txt'), 'a') as f:
+                f.write(f"Error evaluating QS! ")
+            return np.nan
 
-# Define problem
-prob = ConstrainedProblem(qs.total, tuples_nlc=tuples_nlc)
+if coils_objective:
+    J_iota = inputs['vmec']['target']['iota_weight'] * QuadraticPenalty(remake_iota(vmec), inputs['vmec']['target']['iota'], inputs['vmec']['target']['iota_constraint_type'])
+    J_aspect = inputs['vmec']['target']['aspect_ratio_weight'] * QuadraticPenalty(remake_aspect(vmec), inputs['vmec']['target']['aspect_ratio'], inputs['vmec']['target']['aspect_ratio_constraint_type'])
+    J_qs = QuadraticPenalty(quasisymmetry(qs), 0, 'identity')
+    JF_2 = J_iota + J_aspect+ J_qs
+else:
+    # nonlinear constraints for iota and aspect ratio
+    if inputs['vmec']['target']['aspect_ratio_constraint_type']=='identity':
+        aspect_tuple = (vmec.aspect, inputs['vmec']['target']['aspect_ratio'], inputs['vmec']['target']['aspect_ratio'])
+    elif inputs['vmec']['target']['aspect_ratio_constraint_type']=='max':
+        aspect_tuple = (vmec.aspect, 0, inputs['vmec']['target']['aspect_ratio'])
+    elif inputs['vmec']['target']['aspect_ratio_constraint_type']=='min':
+        aspect_tuple = (vmec.aspect, inputs['vmec']['target']['aspect_ratio'], np.inf)
+    
+    if inputs['vmec']['target']['iota_constraint_type']=='identity':
+        iota_tuple = (vmec.mean_iota, inputs['vmec']['target']['iota'], inputs['vmec']['target']['iota'])
+    elif inputs['vmec']['target']['iota_constraint_type']=='max':
+        iota_tuple = (vmec.mean_iota, -np.inf, inputs['vmec']['target']['iota'])
+    elif inputs['vmec']['target']['iota_constraint_type']=='min':
+        iota_tuple = (vmec.mean_iota, inputs['vmec']['target']['iota'], np.inf)
+
+    tuples_nlc = [aspect_tuple, iota_tuple]
+    
+    # Define problem
+    prob = ConstrainedProblem(qs.total, tuples_nlc=tuples_nlc)
 
 # Define target function
 JACOBIAN_THRESHOLD = inputs['numerics']['JACOBIAN_THRESHOLD']
@@ -439,14 +487,14 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
 
     # Separate coils dofs from surface dofs
     JF.x = dofs[:-ndof_vmec]
-    prob.x = dofs[-ndof_vmec:]
+    JF_2.x = dofs[-ndof_vmec:]
 
     # Update surface
     bs.set_points(surf.gamma().reshape((-1, 3)))
 
     # Evaluate target function
     os.chdir(vmec_results_path)
-    J_stage_1 = prob.J()
+    J_stage_1 = JF_2.J()
     J_stage_2 = coils_objective_weight.value * JF.J()
     J = J_stage_1 + J_stage_2
 
@@ -460,7 +508,7 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
     if J > inputs['numerics']['JACOBIAN_THRESHOLD'] or np.isnan(J):
         if comm.rank==0:
             with open(os.path.join(this_path, 'log.txt'), 'a') as f:
-                f.write(f"Exception caught during function evaluation with J={J}. Returning J={JACOBIAN_THRESHOLD}")
+                f.write(f"Exception caught during function evaluation with J={J}. Returning J={JACOBIAN_THRESHOLD}\n")
         J = JACOBIAN_THRESHOLD
         grad_with_respect_to_surface = [0] * ndof_vmec
         grad_with_respect_to_coils = [0] * len(JF.x)
@@ -484,6 +532,8 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
 
         outstr = f"STEP {info['Nfeval']:03.0f}. J_stage_1 = {J_stage_1}, J_stage_2 = {J_stage_2}\n"
         outstr += "VMEC FAILED"
+        grad_with_respect_to_surface = [0] * ndof_vmec
+        grad_with_respect_to_coils = [0] * len(JF.x)
     
     else:
         # Evaluate important metrics    
@@ -518,11 +568,7 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         outputs['IL_msc'].append(float(il_msc.J()))
         outputs['IL_max_curvature'].append(float(il_curvature.J()))
 
-        if np.mod(info['Nfeval'],5)==1 and comm.rank==0:
-            with open(os.path.join(this_path, 'outputs.pckl'), 'wb') as f:
-                pickle.dump( outputs, f )
-        
-    
+   
         # Log output
         outstr = f"STEP {info['Nfeval']:03.0f}. J_stage_1 = {J_stage_1}, J_stage_2 = {J_stage_2}\n"
         outstr += f"aspect={outputs['aspect'][-1]}, iota_axis={outputs['iota_axis'][-1]}, iota_edge={outputs['iota_edge'][-1]}, iota={outputs['mean_iota'][-1]}\n"
@@ -536,28 +582,35 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
             for i, (l, msc, jcs) in enumerate(zip(outputs['WP_length'][-1], outputs['WP_msc'][-1], outputs['WP_max_curvature'][-1])):
                 outstr += f"WP_{i:02.0f} length={l:.2f}, ∫ϰ²/L={msc:.2f}, ∫max(ϰ-ϰ0,0)^2={jcs:.2f}\n" 
         outstr += f"\n"
-            
-        if comm.rank==0:
-            with open(os.path.join(this_path,'simsopt_single_stage_metric.txt'), 'a') as f:
-                f.write(outstr)
+                
+        # Evaluate Jacobian - this is some magic math copied from Rogerio's code
+        prob_dJ = prob_jacobian.jac(JF_2.x)[0] # finite differences
     
-    # Evaluate Jacobian - this is some magic math copied from Rogerio's code
-    prob_dJ = prob_jacobian.jac(prob.x) # finite differences
-
-    coils_dJ = JF.dJ() # Analytical
-
-    assert Jf.definition == "local"
-
-    # Evaluate how Jcoil varies w.r.t the surface dofs
-    dJdx = (B_n/mod_Bcoil**2)[:, :, None] * (np.sum(dB_by_dX*(n-B*(B_N/mod_Bcoil**2)[:, :, None])[:, :, None, :], axis=3))
-    dJdN = (B_n/mod_Bcoil**2)[:, :, None] * B_diff - 0.5 * (B_N**2/absn**3/mod_Bcoil**2)[:, :, None] * n
-    deriv = surf.dnormal_by_dcoeff_vjp(dJdN/(nphi_VMEC*ntheta_VMEC)) \
-          + surf.dgamma_by_dcoeff_vjp(dJdx/(nphi_VMEC*ntheta_VMEC))
-    grad_with_respect_to_coils = coils_objective_weight.value * coils_dJ
-    mixed_dJ = Derivative({surf: deriv})(surf)
+        coils_dJ = JF.dJ() # Analytical
     
-    ## Put both gradients together
-    grad_with_respect_to_surface = np.ravel(prob_dJ) + coils_objective_weight.value * mixed_dJ
+        assert Jf.definition == "local"
+    
+        # Evaluate how Jcoil varies w.r.t the surface dofs
+        dJdx = (B_n/mod_Bcoil**2)[:, :, None] * (np.sum(dB_by_dX*(n-B*(B_N/mod_Bcoil**2)[:, :, None])[:, :, None, :], axis=3))
+        dJdN = (B_n/mod_Bcoil**2)[:, :, None] * B_diff - 0.5 * (B_N**2/absn**3/mod_Bcoil**2)[:, :, None] * n
+        deriv = surf.dnormal_by_dcoeff_vjp(dJdN/(nphi_VMEC*ntheta_VMEC)) \
+              + surf.dgamma_by_dcoeff_vjp(dJdx/(nphi_VMEC*ntheta_VMEC))
+        grad_with_respect_to_coils = coils_objective_weight.value * coils_dJ
+        mixed_dJ = Derivative({surf: deriv})(surf)
+        
+        ## Put both gradients together
+        grad_with_respect_to_surface = np.ravel(prob_dJ) \
+        + coils_objective_weight.value * mixed_dJ
+
+
+    if comm.rank==0:
+        with open(os.path.join(this_path,'log.txt'), 'a') as f:
+            f.write(outstr)
+    
+    #if np.mod(info['Nfeval'],5)==1 and comm.rank==0:
+    with open(os.path.join(this_path, 'outputs.pckl'), 'wb') as f:
+        pickle.dump( outputs, f )
+    
     grad = np.concatenate((grad_with_respect_to_coils,grad_with_respect_to_surface))
 
     return J, grad
@@ -602,7 +655,7 @@ if not coils_objective:
     options = {'disp': True, 'ftol': 1e-7, 'maxiter': inputs['numerics']['MAXITER_stage_2']}
     constrained_mpi_solve(prob, mpi, grad=True, rel_step=1e-5, abs_step=1e-7, options=options)
 else:
-    with MPIFiniteDifference(prob.J, mpi, diff_method=diff_method, abs_step=finite_difference_abs_step, rel_step=finite_difference_rel_step) as prob_jacobian:
+    with MPIFiniteDifference(JF_2.J, mpi, diff_method=diff_method, abs_step=finite_difference_abs_step, rel_step=finite_difference_rel_step) as prob_jacobian:
         if mpi.proc0_world:
             outputs['result'] = minimize(
                     fun, dofs, args=(prob_jacobian, {'Nfeval': 0}), jac=True, method='BFGS', 

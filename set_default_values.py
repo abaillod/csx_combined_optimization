@@ -84,6 +84,8 @@ def set_default(inputs):
         inputs['cnt_coils']['target']['IL_length'] = 3                   # Maximum length for IL coils
     if 'IL_length_weight' not in inputs['cnt_coils']['target'].keys():
         inputs['cnt_coils']['target']['IL_length_weight'] = Weight(1E-5) # Weight on IL length penalty
+    if 'IL_length_constraint_type' not in inputs['cnt_coils']['target'].keys():
+        inputs['cnt_coils']['target']['IL_length_constraint_type'] = 'max' # Weight on IL length penalty
     if 'IL_msc_threshold' not in inputs['cnt_coils']['target'].keys():
         inputs['cnt_coils']['target']['IL_msc_threshold'] = 10           # Maximum mean curvature of IL coils
     if 'IL_msc_weight' not in inputs['cnt_coils']['target'].keys():
@@ -128,6 +130,8 @@ def set_default(inputs):
         inputs['wp_coils']['target']['length'] = inputs['cnt_coils']['target']['IL_length'] / 3 # max length for WP coils
     if 'length_weight' not in inputs['wp_coils']['target'].keys():
         inputs['wp_coils']['target']['length_weight'] = Weight(1E-5)  # Weight on WP length penalty
+    if 'length_constraint_type' not in inputs['wp_coils']['target'].keys():
+        inputs['cnt_coils']['target']['length_constraint_type'] = 'max' # Weight on IL length penalty
     if 'msc_threshold' not in inputs['wp_coils']['target'].keys():
         inputs['wp_coils']['target']['msc_threshold'] = 20            # Maximum mean curvature of WP coils
     if 'msc_weight' not in inputs['wp_coils']['target'].keys():
