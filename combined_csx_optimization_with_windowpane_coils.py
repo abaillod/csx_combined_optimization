@@ -102,6 +102,8 @@ def print_dict_recursive(file, d, order=0, k=None):
                 file.write(f'{k}\n')
             print_dict_recursive(file, i, order=order+1, k=k)
             file.write(f' \n')
+    elif type(d) is Weight:
+        file.write(f'{k} = {d.value}')
     else:
         for l in range(order-1):
             file.write('')
