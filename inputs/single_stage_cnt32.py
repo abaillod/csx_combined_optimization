@@ -13,7 +13,7 @@ inputs['directory'] = 'runs/cnt32_improve_qs'
 
 # SURFACE
 inputs['vmec'] = dict()
-inputs['vmec']['filename'] = 'vmec_inputs/input.vacuum_cssc_scaled'
+inputs['vmec']['filename'] = 'vmec_inputs/input.cnt32'
 inputs['vmec']['verbose'] = False
 inputs['vmec']['nphi'] = 34
 inputs['vmec']['ntheta'] = 34
@@ -42,7 +42,7 @@ inputs['cnt_coils']['geometry'] = dict()
 inputs['cnt_coils']['geometry']['filename'] = 'inputs/flux_100_bs_cssc_cssc.json'
 
 inputs['cnt_coils']['dofs'] = dict()
-inputs['cnt_coils']['dofs']['IL_order'] = 6 # In G. Rawlinson input, this was 7
+inputs['cnt_coils']['dofs']['IL_order'] = 4 # In G. Rawlinson input, this was 7
 inputs['cnt_coils']['dofs']['IL_geometry_free'] = True
 inputs['cnt_coils']['dofs']['PF_current_free'] = True
 
