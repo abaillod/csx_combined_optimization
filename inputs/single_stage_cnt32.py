@@ -9,7 +9,7 @@ inputs['CS_THRESHOLD'] = 0.06
 inputs['CS_WEIGHT'] = Weight(1)
 inputs['CC_THRESHOLD'] = 0.06
 inputs['CC_WEIGHT'] = Weight(1)
-inputs['directory'] = 'runs/cnt32_improve_qs'
+inputs['directory'] = 'runs/test'
 
 # SURFACE
 inputs['vmec'] = dict()
@@ -42,7 +42,7 @@ inputs['cnt_coils']['geometry'] = dict()
 inputs['cnt_coils']['geometry']['filename'] = 'inputs/flux_100_bs_cssc_cssc.json'
 
 inputs['cnt_coils']['dofs'] = dict()
-inputs['cnt_coils']['dofs']['IL_order'] = 4 # In G. Rawlinson input, this was 7
+inputs['cnt_coils']['dofs']['IL_order'] = 1 # In G. Rawlinson input, this was 7
 inputs['cnt_coils']['dofs']['IL_geometry_free'] = True
 inputs['cnt_coils']['dofs']['PF_current_free'] = True
 
@@ -87,11 +87,11 @@ inputs['wp_coils']['target']['current_weight'] = Weight(0)
 
 # NUMERICS
 inputs['numerics'] = dict()
-inputs['numerics']['MAXITER_stage_1'] = 100 # NUmber of iteration for initial stage two optimization
-inputs['numerics']['MAXITER_stage_2'] = 250 # NUmber of iteration for combined optimization
-inputs['numerics']['fndiff_method'] = "forward"
-inputs['numerics']['finite_difference_abs_step'] = 1E-8
-inputs['numerics']['finite_difference_rel_step'] = 1E-5
+inputs['numerics']['MAXITER_stage_1'] = 0 # NUmber of iteration for initial stage two optimization
+inputs['numerics']['MAXITER_stage_2'] = 1 # NUmber of iteration for combined optimization
+inputs['numerics']['fndiff_method'] = "centered"
+inputs['numerics']['finite_difference_abs_step'] = 1E-7
+inputs['numerics']['finite_difference_rel_step'] = 0
 inputs['numerics']['JACOBIAN_THRESHOLD'] = 1e3 # In G Rawlinson input, this was set to 1E2
 inputs['numerics']['algorithm'] = 'BFGS'
 
