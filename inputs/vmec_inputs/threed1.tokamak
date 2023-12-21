@@ -1,0 +1,269 @@
+ THIS IS PARVMEC (PARALLEL VMEC), VERSION 9.0
+ Lambda: Full Radial Mesh. L-Force: hybrid full/half.
+
+ COMPUTER: arm64-apple-darwin20.0.0   OS:    RELEASE:   DATE = Oct 31,2023  TIME = 16:57:03
+ SHOT ID.: tokamak  SEQ. NO.:   0
+ TIME SLICE =    0. ms
+
+ COMPUTATION PARAMETERS: (u = theta, v = zeta)
+ ---------------------------------------------
+     ns     nu     nv     mu     mv
+     16     16     14      5      5
+
+ CONFIGURATION PARAMETERS:
+ ---------------------------------------
+    nfp      gamma      spres_ped    phiedge(wb)     curtor(A)        lRFP
+      2  0.000E+00      1.000E+00      1.444E-02     0.000E+00           F
+
+ RUN CONTROL PARAMETERS:
+ -----------------------
+  ncurr  niter   nsin  nstep  nvacskip      ftol     tcon0    lasym  lforbal lmove_axis lconm1
+      1   6000     16    200         1  1.00E-12  1.00E+00        F        F        T        T
+  mfilter_fbdy nfilter_fbdy lfull3d1out max_main_iterations lgiveup fgiveup
+           -1           -1           F                   1       F  3.0E+01
+
+ PRECONDITIONER CONTROL PARAMETERS:
+ ----------------------------------
+  precon_type   prec2d_threshold
+  NONE                  1.00E-30
+
+ MASS PROFILE COEFFICIENTS - newton/m**2 (EXPANSION IN NORMALIZED RADIUS):
+ PMASS parameterization type is 'power_series'
+ -----------------------------------
+
+
+ TOROIDAL CURRENT DENSITY (*V') COEFFICIENTS ac (EXPANSION IN NORMALIZED RADIUS):
+ PCURR parameterization type is 'power_series'
+ --------------------------------------
+   0.000E+00   0.000E+00   0.000E+00   0.000E+00   0.000E+00   0.000E+00
+   0.000E+00   0.000E+00   0.000E+00   0.000E+00   0.000E+00   0.000E+00
+   0.000E+00   0.000E+00   0.000E+00   0.000E+00   0.000E+00   0.000E+00
+   0.000E+00   0.000E+00   0.000E+00
+
+
+ NORMALIZED TOROIDAL FLUX COEFFICIENTS aphi (EXPANSION IN S):
+ -----------------------------------
+   1.000E+00
+
+ R-Z FOURIER BOUNDARY COEFFICIENTS AND MAGNETIC AXIS INITIAL GUESS
+ R = RBC*COS(m*u - n*v) + RBS*SIN(m*u - n*v), Z = ZBC*COS(m*u - n*v) + ZBS*SIN(m*u-n*v)
+ --------------------------------------------------------------------------------------
+   nb  mb     rbc         rbs         zbc         zbs       raxis(c)    raxis(s)    zaxis(c)    zaxis(s)
+    0   0  2.0123E-01  0.0000E+00  0.0000E+00  0.0000E+00  0.0000E+00  0.0000E+00  0.0000E+00  0.0000E+00
+    1   0  1.0000E-03  0.0000E+00  0.0000E+00  1.0000E-03  0.0000E+00  0.0000E+00  0.0000E+00  0.0000E+00
+    0   1  5.0000E-02  0.0000E+00  0.0000E+00  5.0000E-02
+ FSQR, FSQZ = Normalized Physical Force Residuals
+ fsqr, fsqz = Preconditioned Force Residuals
+ -----------------------
+ BEGIN FORCE ITERATIONS
+ -----------------------
+
+
+  NS =   16 NO. FOURIER MODES =   50 FTOLV =  1.000E-12 NITER =   6000
+  PROCESSOR COUNT - RADIAL:    1
+
+  ITER    FSQR      FSQZ      FSQL      fsqr      fsqz      fsql      DELT    RAX(v=0)      WMHD      BETA      <M>        
+
+     1   2.87E-02  5.86E-06  1.46E-02  2.66E-03  4.53E-07  4.08E-03  9.00E-01  2.022E-01  1.6786E-02  0.000E+00  1.000
+   200   2.20E-11  1.92E-11  3.28E-11  3.13E-13  2.27E-13  1.03E-12  9.00E-01  1.992E-01  1.6523E-02  0.000E+00  1.000
+   400   7.92E-12  4.93E-12  6.74E-12  1.40E-13  3.09E-14  2.21E-13  9.00E-01  1.994E-01  1.6523E-02  0.000E+00  1.000
+   600   4.37E-12  1.94E-12  2.35E-12  5.60E-14  8.72E-15  8.67E-14  9.00E-01  1.996E-01  1.6523E-02  0.000E+00  1.000
+   800   1.97E-12  7.33E-13  1.12E-12  3.26E-14  5.24E-15  5.88E-14  9.00E-01  1.998E-01  1.6523E-02  0.000E+00  1.001
+   983   9.86E-13  2.17E-13  3.92E-13  2.77E-14  1.12E-15  4.77E-14  9.00E-01  2.000E-01  1.6523E-02  0.000E+00  1.001
+
+ MHD Energy = 1.652251E-02   d(ln W)/dt = 3.055E-09   d(ln R0)/dt = 5.616E-06
+
+ NOTE:  S=normalized toroidal flux (0 - 1)
+        U=poloidal angle (0 - 2*pi)
+        V=geometric toroidal angle (0 - 2*pi)
+       <RADIAL FORCE> = d(Ipol)/dPHI - IOTA*d(Itor)/dPHI - dp/dPHI * d(VOL)/dPHI
+                      = d(VOL)/dPHI*[<JSUPU> - IOTA*<JSUPV> - SIGN(JAC)*dp/dPHI]
+       (NORMED TO SUM OF INDIVIDUAL TERMS)
+
+      S     <RADIAL    TOROIDAL      IOTA      <JSUPU>    <JSUPV>     d(VOL)/   d(PRES)/    <M>     PRESF    <BSUBU>    <BSUBV>      <J.B>      <B.B>
+             FORCE>      FLUX                                         d(PHI)     d(PHI)                             
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+  0.00E+00  1.00E+00 -0.0000E+00 -6.5081E-05  6.810E+04 -8.636E-11 -6.839E-01  0.000E+00  1.000  0.000E+00  0.000E+00  3.642E-01 -3.325E-03  3.338E+00
+  6.67E-02  1.00E+00  9.6267E-04 -6.5426E-05  4.389E+04  1.881E-10 -6.844E-01  0.000E+00  1.000  0.000E+00  1.386E-20  3.642E-01 -2.130E-03  3.344E+00
+  1.33E-01  1.00E+00  1.9253E-03 -6.5767E-05  1.971E+04  4.622E-10 -6.850E-01  0.000E+00  1.001  0.000E+00  7.035E-21  3.642E-01 -9.341E-04  3.341E+00
+  2.00E-01  1.00E+00  2.8880E-03 -6.6107E-05  1.201E+04 -8.042E-10 -6.855E-01  0.000E+00  1.002  0.000E+00  1.063E-20  3.642E-01 -3.059E-03  3.338E+00
+  2.67E-01  1.00E+00  3.8507E-03 -6.6448E-05  8.384E+03 -8.742E-10 -6.860E-01  0.000E+00  1.002  0.000E+00  2.827E-20  3.642E-01  1.117E-03  3.336E+00
+  3.33E-01  1.00E+00  4.8133E-03 -6.6792E-05  6.715E+03  1.798E-09 -6.865E-01  0.000E+00  1.002  0.000E+00  1.854E-20  3.642E-01  1.488E-03  3.333E+00
+  4.00E-01  1.00E+00  5.7760E-03 -6.7138E-05  5.150E+03 -4.160E-10 -6.870E-01  0.000E+00  1.002  0.000E+00  4.005E-21  3.642E-01  6.303E-04  3.331E+00
+  4.67E-01  1.00E+00  6.7387E-03 -6.7484E-05  4.346E+03  1.557E-09 -6.875E-01  0.000E+00  1.002  0.000E+00 -8.019E-21  3.642E-01  1.412E-02  3.329E+00
+  5.33E-01  1.00E+00  7.7013E-03 -6.7831E-05  3.961E+03 -5.676E-10 -6.880E-01  0.000E+00  1.002  0.000E+00 -1.844E-20  3.642E-01 -1.650E-02  3.326E+00
+  6.00E-01  1.00E+00  8.6640E-03 -6.8178E-05  3.178E+03 -5.867E-09 -6.885E-01  0.000E+00  1.001  0.000E+00  4.943E-20  3.642E-01 -5.791E-03  3.324E+00
+  6.67E-01  1.00E+00  9.6267E-03 -6.8525E-05  2.837E+03  6.005E-09 -6.890E-01  0.000E+00  1.001  0.000E+00  4.794E-20  3.642E-01 -1.301E-03  3.322E+00
+  7.33E-01  1.00E+00  1.0589E-02 -6.8871E-05  2.518E+03 -3.980E-09 -6.894E-01  0.000E+00  1.001  0.000E+00  2.660E-20  3.642E-01 -3.102E-02  3.319E+00
+  8.00E-01  1.00E+00  1.1552E-02 -6.9217E-05  2.288E+03  1.105E-09 -6.899E-01  0.000E+00  1.000  0.000E+00  5.696E-20  3.642E-01  3.673E-02  3.317E+00
+  8.67E-01  1.00E+00  1.2515E-02 -6.9561E-05  2.125E+03  1.379E-10 -6.904E-01  0.000E+00  1.000  0.000E+00  4.382E-20  3.642E-01  1.306E-02  3.315E+00
+  9.33E-01  1.00E+00  1.3477E-02 -6.9905E-05  1.769E+03 -2.755E-09 -6.909E-01  0.000E+00  1.000  0.000E+00  7.151E-20  3.642E-01  4.330E-02  3.312E+00
+  1.00E+00  1.00E+00  1.4440E-02 -7.0248E-05  1.412E+03 -5.643E-09 -6.913E-01  0.000E+00  1.000  0.000E+00  1.298E-19  3.642E-01  7.354E-02  3.310E+00
+
+ Magnetic field modulation (averaged over toroidal angle)
+ -----------------------------------------------------------------------
+ BMIN(u=0)             =       1.450019
+ BMAX(u=0)             =       1.459295
+ BMIN(u=pi)            =       2.386718
+ BMAX(u=pi)            =       2.406401
+
+
+ Geometric and Magnetic Quantities
+ -----------------------------------------------------------------------
+ Aspect Ratio          =       4.024690
+ Mean Elongation       =       1.012521
+ Plasma Volume         =       0.009931 [M**3]
+ Cross Sectional Area  =       0.007854 [M**2]
+ Normal Surface Area   =       0.397231 [M**2]
+ Poloidal Circumference=       0.314159 [M]
+ Major Radius          =       0.201234 [M] (from Volume and Cross Section)
+ Minor Radius          =       0.050000 [M] (from Cross Section)
+ Minimum (inboard)  R  =       0.150234 [M]
+ Maximum (outboard) R  =       0.252234 [M]
+ Maximum height     Z  =       0.050975 [M]
+ Waist (v = 0)   in R  =       0.100000 [M]
+ Full Height(v = 0)    =       0.100000 [M]
+ Waist (v = pi)  in R  =       0.100000 [M]
+ Full Height(v = pi)   =       0.100000 [M]
+ Toroidal Flux         =       0.014440 [Wb]
+ Toroidal Current      =      -0.000000 [MA]
+ RBtor(s=1)            =       0.364217 [T-m]
+ RBtor(s=0)            =       0.364214 [T-m]
+ Volume Average B      =       1.824177 [T]
+ Ion Larmor Radius     =       0.001754 [M] X Ti(keV)**0.5
+ <J||**2>/<J-perp**2>  = 1820497.103282 (Vol. Averaged)
+ <JPS**2>/<J-perp**2>  = 1820497.103281 (Vol. Averaged)
+
+
+-----------------------------------------------------------------------
+ MORE GEOMETRIC AND PHYSICS QUANTITIES
+-----------------------------------------------------------------------
+ Toroidal Plane: Phi = 0
+     j   psi-psiaxis         a [M]   ellipticity   indentation       d-shape    rel. shift      <J||**2>/    <JPS**2>/
+                                                                                               <J-perp**2>   <J-perp**2>
+ -----  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------
+     2      -0.00000       0.01318       0.96765       0.00000      -0.00048      -0.00562      1.60E+25      1.60E+25
+     3      -0.00000       0.01864       0.96868       0.00000      -0.00049      -0.00802      3.45E+23      3.45E+23
+     4      -0.00000       0.02282       0.97028       0.00000      -0.00044      -0.00991      4.12E+22      4.12E+22
+     5      -0.00000       0.02633       0.97217       0.00000      -0.00037      -0.01151      9.55E+21      9.55E+21
+     6      -0.00000       0.02940       0.97427       0.00000      -0.00029      -0.01292      3.22E+21      3.22E+21
+     7      -0.00000       0.03217       0.97651       0.00000      -0.00021      -0.01419      1.35E+21      1.35E+21
+     8      -0.00000       0.03469       0.97888       0.00000      -0.00013      -0.01535      6.61E+20      6.61E+20
+     9      -0.00000       0.03702       0.98133       0.00000      -0.00007      -0.01641      3.75E+20      3.75E+20
+    10      -0.00000       0.03920       0.98386       0.00000      -0.00001      -0.01739      2.46E+20      2.46E+20
+    11      -0.00000       0.04124       0.98646       0.00000       0.00003      -0.01831      1.84E+20      1.84E+20
+    12      -0.00000       0.04317       0.98910       0.00000       0.00006      -0.01917      1.54E+20      1.54E+20
+    13      -0.00000       0.04500       0.99178       0.00000       0.00007      -0.01997      1.42E+20      1.42E+20
+    14      -0.00000       0.04675       0.99449       0.00000       0.00006      -0.02072      1.38E+20      1.38E+20
+    15      -0.00000       0.04841       0.99724       0.00000       0.00004      -0.02143      1.40E+20      1.40E+20
+    16      -0.00000       0.05000       1.00000       0.00000       0.00000      -0.02211      0.00E+00      0.00E+00
+
+-----------------------------------------------------------------------
+ Toroidal Plane: Phi = 180/Nfp
+-----------------------------------------------------------------------
+
+     2      -0.00000       0.01317       0.96803       0.00000      -0.00047      -0.00527
+     3      -0.00000       0.01864       0.96905       0.00000      -0.00048      -0.00752
+     4      -0.00000       0.02282       0.97062       0.00000      -0.00044      -0.00930
+     5      -0.00000       0.02632       0.97249       0.00000      -0.00038      -0.01080
+     6      -0.00000       0.02940       0.97455       0.00000      -0.00030      -0.01213
+     7      -0.00000       0.03216       0.97677       0.00000      -0.00022      -0.01332
+     8      -0.00000       0.03469       0.97911       0.00000      -0.00014      -0.01441
+     9      -0.00000       0.03702       0.98154       0.00000      -0.00008      -0.01541
+    10      -0.00000       0.03920       0.98404       0.00000      -0.00002      -0.01633
+    11      -0.00000       0.04124       0.98660       0.00000       0.00002      -0.01719
+    12      -0.00000       0.04317       0.98921       0.00000       0.00005      -0.01799
+    13      -0.00000       0.04500       0.99187       0.00000       0.00006      -0.01875
+    14      -0.00000       0.04674       0.99455       0.00000       0.00006      -0.01945
+    15      -0.00000       0.04841       0.99727       0.00000       0.00004      -0.02012
+    16      -0.00000       0.05000       1.00000       0.00000       0.00000      -0.02075
+
+
+ Magnetic Fields and Pressure
+ -----------------------------------------------------------------------
+ Volume Integrals (Joules) and Volume Averages (Pascals)
+                        Integral      Average
+ pressure         =   0.000000E+00  0.000000E+00
+ bpol**2 /(2 mu0) =   1.227597E+00  1.236186E+02
+ btor**2/(2 mu0)  =   1.314697E+04  1.323895E+06
+ b**2/(2 mu0)     =   1.314820E+04  1.324018E+06
+ EKIN (3/2p)      =   0.000000E+00  0.000000E+00
+
+
+ MAGNETIC AXIS COEFFICIENTS
+    n     rmag       zmag        rmag        zmag
+        (cos nv)   (sin nv)    (sin nv)    (cos nv)
+
+    0  1.9909E-01  0.0000E+00
+    1  9.3196E-04 -9.2358E-04
+    2  2.8916E-07 -2.9959E-07
+    3 -4.3487E-10  4.4464E-10
+    4 -9.8475E-15  1.1743E-14
+    5  4.8299E-14 -1.2442E-14
+
+ From volume averages over plasma, betas are
+ beta total    =       0.000000
+ beta poloidal =       0.000000
+ beta toroidal =       0.000000
+
+ R * Btor-vac         =       0.364217 [Wb/M]
+ Peak Beta            =       0.000000
+ Beta-star            =       0.000000
+
+ Shafranov Surface Integrals
+ Ref: S. P. Hirshman, Phys. Fluids B, 5, (1993) 3119
+ Note: s1 = S1/2, s2 = S2/2, where  s1,s2 are the Shafranov definitions,
+ and s3 = S3/2, where S3 is Lao's definition.
+ The quantity lsubi gives the ratio of volume poloidal
+ field energy to the field energy estimated from the
+ surface integral in Eq.8.
+ ----------------------
+
+ RT (Pressure-weighted)  =       0.173801 [M]
+ RG (Geometric)          =       0.000000 [M]
+ RL (Vol/2*pi*Area-Lao)  =       0.201234 [M]
+ Poloidal Field Energy
+ Normalization Ratio     =       0.000000 (Lao/Hirshman)
+
+ s3                      =      -0.843448
+ lsubi                   =       0.727540
+ musubi                  =       1.632172
+ betai                   =       0.000000
+ lambda                  =       0.363770
+
+
+                                R = RT            R = RG            R = RL
+                              --------          --------          --------
+ delta = 1 - RT/R     =       0.000000          1.000000          0.136325
+ s1                   =      -2.249063         -3.905602         -1.987590
+ s2                   =      -1.656540         -Infinity         -1.918012
+ betai (Mui + s1)     =      -0.616891         -2.273431         -0.355418
+ lambda (s1/2 + s2)   =      -2.781071         -Infinity         -2.911807
+ 1st Shafr'v relation =      -0.884188         -1.000000         -0.884188
+ (3*Betai + Li - Mui)/[2*(s1+s2)] - 1
+ Radial force balance =      -1.712241         -1.000000         -1.615145
+ (Betai + Li + Mui)/(2*s2) - 1
+
+
+ EXECUTION TERMINATED NORMALLY
+
+ FILE : tokamak
+ NUMBER OF JACOBIAN RESETS =    1
+
+    TOTAL COMPUTATIONAL TIME (SEC)         0.50
+    TIME TO INPUT/OUTPUT                   0.00
+       READ IN DATA                        0.00
+       WRITE OUT DATA TO WOUT              0.00
+    TIME IN FUNCT3D                        0.49
+       BCOVAR FIELDS                       0.09
+       FOURIER TRANSFORM                   0.08
+       INVERSE FOURIER TRANSFORM           0.09
+       FORCES AND SYMMETRIZE               0.11
+       RESIDUE                             0.07
+       EQFORCE                             0.00
+
+ NO. OF PROCS:     1
+ PARVMEC     :     T
+ LPRECOND    :     F
+ LV3FITCALL  :     F

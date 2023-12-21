@@ -13,14 +13,14 @@ inputs['directory'] = 'runs/test_dir'        # Name of output directory
 
 # SURFACE
 inputs['vmec'] = dict()
-inputs['vmec']['filename'] = 'input.CSSCscaled3' # Input filename for VMEC
+inputs['vmec']['filename'] = 'inputs/vmec_inputs/input.CSSCscaled3' # Input filename for VMEC
 inputs['vmec']['verbose'] = False                # Set to True for additional VMEC messages (useful for debug)
 inputs['vmec']['nphi'] = 34                      # VMEC toroidal resolution in real space
 inputs['vmec']['ntheta'] = 34                    # VMEC poloidal resolution in real space
 
 inputs['vmec']['dofs'] = dict() 
-inputs['vmec']['dofs']['mpol'] = 2 # VMEC boundary dofs with  m<=mpol will be unfixed
-inputs['vmec']['dofs']['ntor'] = 2 # VMEC boundary dofs with |n|<= ntor will be unfixed
+inputs['vmec']['dofs']['internal_mpol'] = 2 # VMEC boundary dofs with  m<=mpol will be unfixed
+inputs['vmec']['dofs']['internal_ntor'] = 2 # VMEC boundary dofs with |n|<= ntor will be unfixed
 
 inputs['vmec']['target'] = dict()
 inputs['vmec']['target']['aspect_ratio'] = 3.5                             # Target value for boundary aspect ratio
@@ -38,7 +38,7 @@ inputs['vmec']['target']['qa_nphi'] = 64                                   # Tor
 ## Interlinked (IL) and Poloidal field (PF) coils related inputs
 inputs['cnt_coils'] = dict()
 inputs['cnt_coils']['geometry'] = dict()
-inputs['cnt_coils']['geometry']['filename'] = 'flux_100_bs_cssc_cssc.json' # Input file for IL and PF coils initial guess
+inputs['cnt_coils']['geometry']['filename'] = 'inputs/coil_inputs/flux_100_bs_cssc_cssc.json' # Input file for IL and PF coils initial guess
 
 inputs['cnt_coils']['dofs'] = dict()
 inputs['cnt_coils']['dofs']['IL_order'] = 2            # The xn, yn, zn, with n<=IL_order are unfixed 
@@ -85,9 +85,10 @@ inputs['wp_coils']['target']['current_weight'] = Weight(1E-5) # Weight on WP max
 
 # NUMERICS
 inputs['numerics'] = dict()
-inputs['numerics']['MAXITER_stage_1'] = 10 # NUmber of iteration for initial stage two optimization
-inputs['numerics']['MAXITER_stage_2'] = 10 # NUmber of iteration for combined optimization
+inputs['numerics']['MAXITER_stage_2'] = 10 # NUmber of iteration for initial stage two optimization
+inputs['numerics']['MAXITER_single_stage'] = 10 # NUmber of iteration for combined optimization
 inputs['numerics']['fndiff_method'] = "forward"
 inputs['numerics']['finite_difference_abs_step'] = 0
 inputs['numerics']['finite_difference_rel_step'] = 1E-5
 inputs['numerics']['JACOBIAN_THRESHOLD'] = 100
+inputs['numerics']['taylor_test'] = False
