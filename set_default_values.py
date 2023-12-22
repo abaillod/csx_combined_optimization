@@ -229,6 +229,6 @@ def set_default(inputs):
         inputs['numerics']['algorithm'] = 'BFGS'
     if 'taylor_test' not in inputs['numerics'].keys():
         logprint('Setting default value for numerics taylor_test', out)
-        inputs['numerics']['taylor'] = False
+        inputs['numerics']['taylor_test'] = False
 
     return out

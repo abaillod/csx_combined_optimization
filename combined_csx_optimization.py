@@ -196,6 +196,7 @@ surf = vmec.boundary
 vmec.write_input(os.path.join(this_path, f'input.initial'))
 
 # Load IL and PF initial coils. Extract the base curves and currents.
+print(f"Loading the coils from file {os.path.join(parent_path, inputs['cnt_coils']['geometry']['filename'])}")
 cnt_initial_coils = load( os.path.join(parent_path, inputs['cnt_coils']['geometry']['filename']) )
 il_base_coil = cnt_initial_coils.coils[0]
 il_coils = cnt_initial_coils.coils[0:2]
@@ -273,9 +274,10 @@ bs = BiotSavart(full_coils)
 bs.set_points( surf.gamma().reshape((-1,3)) )
 
 # Save initial coils and surface
-coils_to_vtk( full_coils, os.path.join(coils_results_path, "initial_coils") )
-surf_to_vtk( os.path.join(coils_results_path, "initial_surface"), bs, surf )
-bs.save( os.path.join(coils_results_path, "bs_initial.json") )
+if comm.rank==0:
+    coils_to_vtk( full_coils, os.path.join(coils_results_path, "initial_coils") )
+    surf_to_vtk( os.path.join(coils_results_path, "initial_surface"), bs, surf )
+    bs.save( os.path.join(coils_results_path, "bs_initial.json") )
 
 
 # =================================================================================================
@@ -411,9 +413,10 @@ if inputs['numerics']['MAXITER_stage_2'] > 0:
     res = minimize(fun_coils, dofs, jac=True, method='L-BFGS-B', args=({'Nfeval': 0}), options=options, tol=1e-12)
     
     # Save coils and surface post stage-two
-    coils_to_vtk( full_coils, os.path.join(coils_results_path, "coils_post_stage_2") )
-    surf_to_vtk( os.path.join(coils_results_path, "surf_post_stage_2"), bs, surf )
-    bs.save( os.path.join(coils_results_path, "bs_post_stage_2.json") )
+    if comm.rank==0:
+        coils_to_vtk( full_coils, os.path.join(coils_results_path, "coils_post_stage_2") )
+        surf_to_vtk( os.path.join(coils_results_path, "surf_post_stage_2"), bs, surf )
+        bs.save( os.path.join(coils_results_path, "bs_post_stage_2.json") )
 
 
 
@@ -799,11 +802,12 @@ with MPIFiniteDifference(Jplasma.J, mpi, diff_method=diff_method, abs_step=finit
                 outputs['taylor_test']['final']['Jtotal'] = taylor_test(fun, dofs, h)
         
 # Save output
-coils_to_vtk( full_coils, os.path.join(coils_results_path, "coils_output") )
-surf_to_vtk( os.path.join(coils_results_path, "surf_output"), bs, surf )
+if comm.rank==0:    
+    coils_to_vtk( full_coils, os.path.join(coils_results_path, "coils_output") )
+    surf_to_vtk( os.path.join(coils_results_path, "surf_output"), bs, surf )
 
-with open(os.path.join(this_path, 'outputs.pckl'), 'wb') as f:
-    pickle.dump( outputs, f )
-    
-bs.save( os.path.join(coils_results_path, "bs_output.json") )
-vmec.write_input(os.path.join(this_path, f'input.final'))
+    with open(os.path.join(this_path, 'outputs.pckl'), 'wb') as f:
+        pickle.dump( outputs, f )
+
+    bs.save( os.path.join(coils_results_path, "bs_output.json") )
+    vmec.write_input(os.path.join(this_path, f'input.final'))
