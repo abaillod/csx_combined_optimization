@@ -197,12 +197,43 @@ vmec.write_input(os.path.join(this_path, f'input.initial'))
 
 # Load IL and PF initial coils. Extract the base curves and currents.
 print(f"Loading the coils from file {os.path.join(parent_path, inputs['cnt_coils']['geometry']['filename'])}")
-cnt_initial_coils = load( os.path.join(parent_path, inputs['cnt_coils']['geometry']['filename']) )
-il_base_coil = cnt_initial_coils.coils[0]
-il_coils = cnt_initial_coils.coils[0:2]
-pf_base_coil = cnt_initial_coils.coils[2]
-pf_coils = cnt_initial_coils.coils[2:4]
+bs = load( os.path.join(parent_path, inputs['cnt_coils']['geometry']['filename']) )
+cnt_initial_coils = bs.coils
+#il_base_coil = cnt_initial_coils.coils[0]
+#il_coils = cnt_initial_coils.coils[0:2]
+#pf_base_coil = cnt_initial_coils.coils[2]
+#pf_coils = cnt_initial_coils.coils[2:4]
+
+# Renormalize currrents
+base_il_current = Current( 1 ) # Dof is now order 1
+base_il_current.name = 'IL_current'
+base_pf_current = Current( 1 ) # Dof is now order 1
+base_pf_current.name = 'PF_current'
+
+il_current = cnt_initial_coils[0].current.get_value()
+if cnt_initial_coils[1].current.get_value() == il_current:
+    il_sgn = +1
+else:
+    il_sgn = -1
+
+pf_current = cnt_initial_coils[2].current.get_value()
+if cnt_initial_coils[3].current.get_value() == pf_current:
+    pf_sgn = +1
+else:
+    pf_sgn = -1
+
+c0 = Coil( cnt_initial_coils[0].curve, ScaledCurrent( base_il_current, il_current ) )
+c1 = Coil( cnt_initial_coils[1].curve, ScaledCurrent( base_il_current, il_sgn*il_current ) )
+c2 = Coil( cnt_initial_coils[2].curve, ScaledCurrent( base_pf_current, pf_current ) )
+c3 = Coil( cnt_initial_coils[3].curve, ScaledCurrent( base_pf_current, pf_sgn*pf_current ) )
+il_base_coil = c0
+il_coils = [c0, c1]
+pf_base_coil = c2
+pf_coils = [c2, c3]
+
+# Remove this to free some memory...
 del(cnt_initial_coils)
+del(bs)
 
 # Extract core curves. Rename each coil for easier reading of the dofs name.
 il_base_curve = il_coils[0].curve
