@@ -29,6 +29,8 @@ os.chdir(this_path)
 v = Vmec('input.final')
 v.run()
 
+
+# Run boozer
 b = bx.Booz_xform()
 b.read_wout(v.output_file)
 b.mboz = 48
@@ -44,6 +46,7 @@ print('Mean QA metric: ',np.mean(f))
 print('Mean iota: ',np.mean(b.iota))
 s = b.s_b
 
+# Plot quaissymmetry
 plt.figure()
 plt.plot(s,f)
 plt.xlabel('s [normalized toroidal flux]')
@@ -52,6 +55,7 @@ plt.savefig(os.path.join(figure_path, 'fquasisymmetry'))
 if args.show:
     plt.show()
 
+# Plot rotational transform
 plt.figure()
 plt.plot(s,b.iota)
 plt.xlabel('s [normalized toroidal flux]')
@@ -61,12 +65,14 @@ plt.savefig(os.path.join(figure_path, 'iota'))
 if args.show:
     plt.show()
 
+# Plot |B| contours
 plt.figure()
 bx.surfplot(b, js=-1)
 plt.savefig('modB_plot.png')
 if args.show:
     plt.show()
 
+# plot magnetic well
 plt.figure()
 plt.plot(v.s_half_grid,v.wout.vp[1::])
 plt.xlabel('s [normalized toroidal flux]')
@@ -75,7 +81,7 @@ plt.savefig(os.path.join(figure_path, 'magnetic_well'))
 if args.show:
     plt.show()
 
-# Poincare
+# Run and plot Poincare section
 bs = load(os.path.join(this_path, 'coils/bs_output.json'))
 vmec_surf = SurfaceRZFourier.from_wout(v.output_file) # vmec surface
 vmec_surf_1 = SurfaceRZFourier.from_wout(v.output_file) # Expanded vmec surface
