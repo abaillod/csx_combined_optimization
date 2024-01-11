@@ -70,6 +70,7 @@ inputs['wp_coils']['geometry']['Z0'] = [0]  # Number of "rows" of WP coils
 inputs['wp_coils']['dofs'] = dict()
 inputs['wp_coils']['dofs']['order'] = 2     # The xn, yn, zn with |n|<=order will be unfixed
 inputs['wp_coils']['dofs']['planar'] = True # Enforce coils to remain planar if True (fix all yn)
+inputs['cnt_coils']['dofs']['R00_free'] = False
 
 inputs['wp_coils']['target'] = dict()
 inputs['wp_coils']['target']['length'] = inputs['cnt_coils']['target']['IL_length'] / 3 # max length for WP coils
@@ -81,6 +82,10 @@ inputs['wp_coils']['target']['maxc_threshold'] = 50           # Maximum local cu
 inputs['wp_coils']['target']['maxc_weight'] = Weight(0)       # Weight on WP local curvature
 inputs['wp_coils']['target']['current_threshold'] = 1E+5      # Maximum current in WP coils
 inputs['wp_coils']['target']['current_weight'] = Weight(1E-5) # Weight on WP maximum current penalty
+inputs['cnt_coils']['target']['IL_maxR_threshold'] = 0.65  
+inputs['cnt_coils']['target']['IL_maxR_weight'] = Weight(1)
+inputs['cnt_coils']['target']['IL_maxZ_threshold'] = 0.75  
+inputs['cnt_coils']['target']['IL_maxZ_weight'] = Weight(1)
 
 
 # NUMERICS

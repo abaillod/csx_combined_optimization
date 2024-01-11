@@ -14,7 +14,7 @@ from simsopt.field import SurfaceClassifier, \
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--path", dest="path", default=None)
-parser.add_argument("--show", dest="show", default=True)
+parser.add_argument("--show", dest="show", default=False, action="store_true")
 
 # Prepare args
 args = parser.parse_args()
@@ -60,7 +60,6 @@ plt.figure()
 plt.plot(s,b.iota)
 plt.xlabel('s [normalized toroidal flux]')
 plt.ylabel('iota')
-plt.savefig('iota.png')
 plt.savefig(os.path.join(figure_path, 'iota'))
 if args.show:
     plt.show()
@@ -68,7 +67,7 @@ if args.show:
 # Plot |B| contours
 plt.figure()
 bx.surfplot(b, js=-1)
-plt.savefig('modB_plot.png')
+plt.savefig(os.path.join(figure_path, 'modB.png'))
 if args.show:
     plt.show()
 
