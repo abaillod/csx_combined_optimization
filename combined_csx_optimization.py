@@ -59,6 +59,7 @@ import argparse
 from jax import grad
 import jax.numpy as jnp
 from simsopt.geo.jit import jit
+from simsopt._core.derivative import derivative_dec
 
 # Read command line arguments
 parser = argparse.ArgumentParser()
