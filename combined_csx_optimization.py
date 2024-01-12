@@ -445,7 +445,7 @@ Jcoils += il_curveZ_weight * LpCurveZ( il_base_curve, 2, il_curveZ_threshold )
 if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
     wp_lengths = [CurveLength( c ) for c in wp_base_curves]
     wp_length_threshold = inputs['wp_coils']['target']['length']
-    wp_length_penalty_type = inputs['wp_coils']['target']['length_constraint_type ']
+    wp_length_penalty_type = inputs['wp_coils']['target']['length_constraint_type']
     wp_length_weight = inputs['wp_coils']['target']['length_weight']
     Jcoils += wp_length_weight * sum([QuadraticPenalty( wpl, wp_length_threshold, wp_length_penalty_type) for wpl in wp_lengths])
 
