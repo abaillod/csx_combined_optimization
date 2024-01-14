@@ -325,7 +325,7 @@ def Lp_R_pure(gamma, gammadash, p, Rmax):
     This function is used in a Python+Jax implementation of the curvature penalty term.
     """
     arc_length = jnp.linalg.norm(gammadash, axis=1)
-    R = jnp.sqrt(gamma[:,1]**2 + gamma[:,2]**2)
+    R = jnp.sqrt(gamma[:,0]**2 + gamma[:,2]**2)
     return (1./p)*jnp.mean(jnp.maximum(R-Rmax, 0)**p * arc_length)
 
 
@@ -368,7 +368,7 @@ def Lp_Z_pure(gamma, gammadash, p, Zmax):
     This function is used in a Python+Jax implementation of the curvature penalty term.
     """
     arc_length = jnp.linalg.norm(gammadash, axis=1)
-    Z = gamma[:,0]
+    Z = gamma[:,1]
     return (1./p)*jnp.mean(jnp.maximum(Z-Zmax, 0)**p * arc_length)
 
 
