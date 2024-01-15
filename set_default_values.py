@@ -156,69 +156,6 @@ def set_default(inputs):
         inputs['cnt_coils']['target']['IL_maxZ_weight'] = Weight(1)
 
         
-    ## Windowpane coils related inputs
-    if 'wp_coils' not in inputs.keys():
-        inputs['wp_coils'] = dict()
-    if 'geometry' not in inputs['wp_coils'].keys():
-        inputs['wp_coils']['geometry'] = dict()
-    if 'filename' not in inputs['wp_coils']['geometry'].keys():
-        out = logprint('Setting default value for wp_coils geometry filename', out)
-        inputs['wp_coils']['geometry']['filename'] = None # if None, coils are initialized 
-                                                          # according to inputs below
-    if 'ncoil_per_row' not in inputs['wp_coils']['geometry'].keys():
-        out = logprint('Setting default value for wp_coils geometry ncoils_per_row', out)
-        inputs['wp_coils']['geometry']['ncoil_per_row'] = 2 # total number of wp coils will be 
-                                                            # nfp*size(Z0)*ncoil_per_row
-    if 'R0' not in inputs['wp_coils']['geometry'].keys():
-        out = logprint('Setting default value for wp_coils geometry R0', out)
-        inputs['wp_coils']['geometry']['R0'] = 0.3  # Initial radial position of WP coils
-    if 'R1' not in inputs['wp_coils']['geometry'].keys():
-        out = logprint('Setting default value for wp_coils geometry R1', out)
-        inputs['wp_coils']['geometry']['R1'] = 0.05 # Initial radius of WP coils
-    if 'Z0' not in inputs['wp_coils']['geometry'].keys():
-        out = logprint('Setting default value for wp_coils geometry Z0', out)
-        inputs['wp_coils']['geometry']['Z0'] = [0]  # Number of "rows" of WP coils
-    
-    if 'dofs' not in inputs['wp_coils'].keys():    
-        inputs['wp_coils']['dofs'] = dict()
-    if 'order' not in inputs['wp_coils']['dofs'].keys():
-        out = logprint('Setting default value for wp_coils dofs order', out)
-        inputs['wp_coils']['dofs']['order'] = 2     # The xn, yn, zn with |n|<=order will be unfixed
-    if 'planar' not in inputs['wp_coils']['dofs'].keys():
-        out = logprint('Setting default value for wp_coils dofs planar', out)
-        inputs['wp_coils']['dofs']['planar'] = True # Enforce coils to remain planar if True (fix all yn)
-        
-    if 'target' not in inputs['wp_coils'].keys():
-        inputs['wp_coils']['target'] = dict()
-    if 'length' not in inputs['wp_coils']['target'].keys():
-        out = logprint('Setting default value for wp_coils target length', out)
-        inputs['wp_coils']['target']['length'] = inputs['cnt_coils']['target']['IL_length'] / 3 # max length for WP coils
-    if 'length_weight' not in inputs['wp_coils']['target'].keys():
-        out = logprint('Setting default value for wp_coils target length_weight', out)
-        inputs['wp_coils']['target']['length_weight'] = Weight(1E-5)  # Weight on WP length penalty
-    if 'length_constraint_type' not in inputs['wp_coils']['target'].keys():
-        out = logprint('Setting default value for wp_coils target length_constraint_type', out)
-        inputs['wp_coils']['target']['length_constraint_type'] = 'max' # Weight on IL length penalty
-    if 'msc_threshold' not in inputs['wp_coils']['target'].keys():
-        out = logprint('Setting default value for wp_coils target msc_threshold', out)
-        inputs['wp_coils']['target']['msc_threshold'] = 20            # Maximum mean curvature of WP coils
-    if 'msc_weight' not in inputs['wp_coils']['target'].keys():
-        out = logprint('Setting default value for wp_coils target msc_weight', out)
-        inputs['wp_coils']['target']['msc_weight'] = Weight(0)        # Weight on WP coils mean curvature penalty 
-    if 'maxc_threshold' not in inputs['wp_coils']['target'].keys():
-        out = logprint('Setting default value for wp_coils target maxc_threshold', out)
-        inputs['wp_coils']['target']['maxc_threshold'] = 50           # Maximum local curvature of WP coils
-    if 'maxc_weight' not in inputs['wp_coils']['target'].keys():
-        out = logprint('Setting default value for wp_coils target maxc_weight', out)
-        inputs['wp_coils']['target']['maxc_weight'] = Weight(0)       # Weight on WP local curvature
-    if 'current_threshold' not in inputs['wp_coils']['target'].keys():
-        out = logprint('Setting default value for wp_coils target current_threshold', out)
-        inputs['wp_coils']['target']['current_threshold'] = 1E+5      # Maximum current in WP coils
-    if 'current_weight' not in inputs['wp_coils']['target'].keys():
-        out = logprint('Setting default value for wp_coils target current_weight', out)
-        inputs['wp_coils']['target']['current_weight'] = Weight(1E-5) # Weight on WP maximum current penalty
-        
-        
     # NUMERICS
     if 'numerics' not in inputs.keys():
         inputs['numerics'] = dict()

@@ -62,34 +62,6 @@ inputs['cnt_coils']['target']['IL_maxc_weight'] = Weight(1)
 inputs['cnt_coils']['target']['PF_current_threshold'] = 1E6 
 inputs['cnt_coils']['target']['PF_current_weight'] = Weight(1)
 
-## Windowpane coils related inputs
-inputs['wp_coils'] = dict()
-inputs['wp_coils']['geometry'] = dict()
-inputs['wp_coils']['geometry']['filename'] = None # if None, coils are initialized 
-                                                  # according to inputs below
-inputs['wp_coils']['geometry']['ncoil_per_row'] = 0 # total number of wp coils will be 
-                                                    # nfp*size(Z0)*ncoil_per_row
-                                                    # if zero, all WP penalty are unused
-inputs['wp_coils']['geometry']['R0'] = 0.3
-inputs['wp_coils']['geometry']['R1'] = 0.05
-inputs['wp_coils']['geometry']['Z0'] = [0]
-
-inputs['wp_coils']['dofs'] = dict()
-inputs['wp_coils']['dofs']['order'] = 2
-inputs['wp_coils']['dofs']['planar'] = True # Enforce coils to remain planar if True
-
-inputs['wp_coils']['target'] = dict()
-inputs['wp_coils']['target']['length'] = inputs['cnt_coils']['target']['IL_length'] / 3
-inputs['wp_coils']['target']['length_weight'] = Weight(0)
-inputs['wp_coils']['target']['length_constraint_type'] = 'max'
-inputs['wp_coils']['target']['msc_threshold'] = 20
-inputs['wp_coils']['target']['msc_weight'] = Weight(0)
-inputs['wp_coils']['target']['maxc_threshold'] = 50
-inputs['wp_coils']['target']['maxc_weight'] = Weight(0)
-inputs['wp_coils']['target']['current_threshold'] = 1E+5 
-inputs['wp_coils']['target']['current_weight'] = Weight(0)
-
-
 # NUMERICS
 inputs['numerics'] = dict()
 inputs['numerics']['MAXITER_stage_1'] = 100 # NUmber of iteration for initial stage two optimization

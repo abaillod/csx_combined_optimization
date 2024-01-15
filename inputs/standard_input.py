@@ -62,34 +62,6 @@ inputs['cnt_coils']['target']['IL_maxR_weight'] = Weight(1)   # Weight on max ra
 inputs['cnt_coils']['target']['IL_maxZ_threshold'] = 0.75     # Max vertical position of coils
 inputs['cnt_coils']['target']['IL_maxZ_weight'] = Weight(1)   # Weight on max vertical position
 
-## Windowpane coils related inputs
-inputs['wp_coils'] = dict()
-inputs['wp_coils']['geometry'] = dict()
-inputs['wp_coils']['geometry']['filename'] = None # if None, coils are initialized 
-                                                  # according to inputs below
-inputs['wp_coils']['geometry']['ncoil_per_row'] = 2 # total number of wp coils will be 
-                                                    # nfp*size(Z0)*ncoil_per_row
-inputs['wp_coils']['geometry']['R0'] = 0.3  # Initial radial position of WP coils
-inputs['wp_coils']['geometry']['R1'] = 0.05 # Initial radius of WP coils
-inputs['wp_coils']['geometry']['Z0'] = [0]  # Number of "rows" of WP coils
-
-inputs['wp_coils']['dofs'] = dict()
-inputs['wp_coils']['dofs']['order'] = 2     # The xn, yn, zn with |n|<=order will be unfixed
-inputs['wp_coils']['dofs']['planar'] = True # Enforce coils to remain planar if True (fix all yn)
-inputs['cnt_coils']['dofs']['R00_free'] = False # Wether or not the R00 harmonic should be free
-
-inputs['wp_coils']['target'] = dict()
-inputs['wp_coils']['target']['length'] = inputs['cnt_coils']['target']['IL_length'] / 3 # max length for WP coils
-inputs['wp_coils']['target']['length_weight'] = Weight(1E-5)  # Weight on WP length penalty
-inputs['wp_coils']['target']['length_constraint_type'] = 'max'
-inputs['wp_coils']['target']['msc_threshold'] = 20            # Maximum mean curvature of WP coils
-inputs['wp_coils']['target']['msc_weight'] = Weight(0)        # Weight on WP coils mean curvature penalty 
-inputs['wp_coils']['target']['maxc_threshold'] = 50           # Maximum local curvature of WP coils
-inputs['wp_coils']['target']['maxc_weight'] = Weight(0)       # Weight on WP local curvature
-inputs['wp_coils']['target']['current_threshold'] = 1E+5      # Maximum current in WP coils
-inputs['wp_coils']['target']['current_weight'] = Weight(1E-5) # Weight on WP maximum current penalty
-
-
 # NUMERICS
 inputs['numerics'] = dict()
 inputs['numerics']['MAXITER_stage_2'] = 10 # NUmber of iteration for initial stage two optimization

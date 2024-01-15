@@ -43,8 +43,7 @@ from simsopt.mhd import Vmec, QuasisymmetryRatioResidual
 from simsopt._core.finite_difference import MPIFiniteDifference
 from simsopt.field import BiotSavart, Current, coils_via_symmetries, apply_symmetries_to_curves
 from simsopt.objectives import SquaredFlux, QuadraticPenalty, LeastSquaresProblem, Weight
-from simsopt.geo import CurveLength, CurveCurveDistance, MeanSquaredCurvature,  LpCurveCurvature, ArclengthVariation, curves_to_vtk, create_equally_spaced_curves, create_equally_spaced_windowpane_curves, CurveSurfaceDistance
-from simsopt.geo.windowpanecurve import WindowpaneCurveXYZFourier
+from simsopt.geo import CurveLength, CurveCurveDistance, MeanSquaredCurvature,  LpCurveCurvature, ArclengthVariation, curves_to_vtk, create_equally_spaced_curves, CurveSurfaceDistance
 from simsopt.field.coilobjective import CurrentPenalty
 from simsopt.field.coil import apply_symmetries_to_currents, ScaledCurrent
 from simsopt.field.coil import Coil
@@ -257,52 +256,12 @@ pf_base_curve.name = 'PF_base_curve'
 pf_base_current = pf_coils[0].current
 pf_base_current.name = 'PF_base_current'
 
-# Load or generate windowpane coils
-if inputs['wp_coils']['geometry']['filename'] is None:
-    if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
-        wp_base_curves = []
-        wp_base_currents = []
-        for Z0 in inputs['wp_coils']['geometry']['Z0']:
-            wp_base_curves += create_equally_spaced_windowpane_curves( 
-                inputs['wp_coils']['geometry']['ncoil_per_row'], 
-                surf.nfp, surf.stellsym, 
-                inputs['wp_coils']['geometry']['R0'], 
-                inputs['wp_coils']['geometry']['R1'], 
-                Z0, order=10
-            )
-            
-        wp_base_currents += [ScaledCurrent( Current(0), 1e5 ) for c in wp_base_curves]
-        wp_base_coils = [Coil(curve, current) for curve, current in zip(wp_base_curves, wp_base_currents)]
-        wp_coils = [Coil(curve,current) for curve, current in zip(
-            apply_symmetries_to_curves(wp_base_curves, surf.nfp, surf.stellsym),
-            apply_symmetries_to_currents(wp_base_currents, surf.nfp, surf.stellsym)
-        )]
-    
-    else:
-        wp_coils = []
-        wp_base_coils = []
-        wp_base_curves = []
-        wp_base_currents = []
-
-else:
-    bs = load( inputs['wp_coils']['geometry']['filename'] )
-    ncpr = inputs['wp_coils']['geometry']['ncoil_per_row']
-    nr = len(inputs['wp_coils']['geometry']['Z0'])
-    wp_base_coils = bs.coils[4:4+ncpr*nr]
-    wp_coils = bs.coils[4:]
-    wp_base_curves = [c.curve for c in wp_base_coils]
-    wp_base_currents = [c.current for c in wp_base_coils]
-
-for ii, c in enumerate(wp_base_curves):
-    c.name = f'WP_base_curve_{ii}'
-for ii, c in enumerate(wp_base_currents):
-    c.name = f'WP_base_current_{ii}'
 
 # Define some useful arrays
-full_coils = il_coils + pf_coils + wp_coils
+full_coils = il_coils + pf_coils 
 full_curves = [c.curve for c in full_coils]
 
-base_coils = [il_base_coil, pf_base_coil] + wp_base_coils
+base_coils = [il_base_coil, pf_base_coil] 
 base_curves = [c.curve for c in base_coils]
 
 # Define the BiotSavart field and set evaluation points on the VMEC boundary
@@ -441,24 +400,6 @@ il_curveZ_threshold = inputs['cnt_coils']['target']['IL_maxZ_threshold']
 il_curveZ_weight = inputs['cnt_coils']['target']['IL_maxZ_weight']
 Jcoils += il_curveZ_weight * LpCurveZ( il_base_curve, 2, il_curveZ_threshold )
 
-# WP penalties
-if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
-    wp_lengths = [CurveLength( c ) for c in wp_base_curves]
-    wp_length_threshold = inputs['wp_coils']['target']['length']
-    wp_length_penalty_type = inputs['wp_coils']['target']['length_constraint_type']
-    wp_length_weight = inputs['wp_coils']['target']['length_weight']
-    Jcoils += wp_length_weight * sum([QuadraticPenalty( wpl, wp_length_threshold, wp_length_penalty_type) for wpl in wp_lengths])
-
-    wp_curvature_threshold = inputs['wp_coils']['target']['maxc_threshold']
-    wp_curvature_weight = inputs['wp_coils']['target']['maxc_weight']
-    wp_curvatures = [LpCurveCurvature(c, 2, wp_curvature_threshold) for c in wp_base_curves]
-    Jcoils += wp_curvature_weight * sum(wp_curvatures)
-
-    wp_msc = [MeanSquaredCurvature(c) for c in wp_base_curves]
-    wp_msc_threshold = inputs['wp_coils']['target']['msc_threshold']
-    wp_msc_weight = inputs['wp_coils']['target']['msc_weight']
-    Jcoils += wp_msc_weight * sum([QuadraticPenalty(msc, wp_msc_threshold, f='max') for msc in wp_msc])
-
 Jccdist = CurveCurveDistance(full_curves, inputs['CC_THRESHOLD'], num_basecurves=len(full_curves))
 Jcoils += Jccdist * inputs['CC_WEIGHT']
 
@@ -492,11 +433,6 @@ def fun_coils(dofs, info):
         outstr += f", ║∇J coils║={np.linalg.norm(Jcoils.dJ()):.1e}, C-C-Sep={Jccdist.shortest_distance():.2f}"
         outstr += f", C-S-Sep={Jcsdist.shortest_distance():.2f}"
         outstr += f"IL length={il_length.J():.2f},  IL ∫ϰ²/L={il_msc.J():.2f},  IL ∫max(ϰ-ϰ0,0)^2={il_curvature.J():.2f}\n"
-        if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
-            for i, (l, msc, jcs) in enumerate(zip(wp_lengths, wp_msc, wp_curvatures)):
-                outstr += f"WP_{i:02.0f} length={l.J():.2f},  WP_{i:02.0f} ∫ϰ²/L={msc.J():.2f},  WP_{i:02.0f} ∫max(ϰ-ϰ0,0)^2={jcs.J():.2f}\n" 
-            outstr += f"\n"
-
         log_print(outstr)
 
     return J, grad
@@ -516,22 +452,6 @@ if inputs['cnt_coils']['dofs']['IL_geometry_free']:
 # Unfix PF current
 if inputs['cnt_coils']['dofs']['PF_current_free']:
     pf_base_current.unfix_all()
-
-# Unfix WP geometry
-for c in wp_base_curves:
-    for xyz in ['x','y','z']:
-        c.unfix(f'{xyz}0')
-    for ypr in ['yaw','pitch','roll']:
-        c.unfix(f'{ypr}')
-    for ii in range(1,inputs['wp_coils']['dofs']['order']+1):
-        c.unfix(f'xc({ii})')
-        c.unfix(f'xs({ii})')
-        c.unfix(f'zc({ii})')
-        c.unfix(f'zs({ii})')
-
-# Unfix WP current
-for c in wp_base_currents:
-    c.unfix_all()
 
 # Save initial degrees of freedom
 log_print('The initial coils degrees of freedom are:\n')
@@ -585,11 +505,8 @@ outputs['BdotN'] = []               # Value of B.n/|n| evaluated on the plasma b
 outputs['min_CS'] = []              # Min plasma-coil distance
 outputs['min_CC'] = []              # Min coil-coil distance
 outputs['IL_length'] = []           # Length of IL coil
-outputs['WP_length'] = []           # Length of WP coils
 outputs['IL_msc'] = []              # Mean square curvature of IL coil
-outputs['WP_msc'] = []              # Mean square curvature of WP coils
 outputs['IL_max_curvature'] = []    # IL max curvature penalty. This is 0 if below threshold 
-outputs['WP_max_curvature'] = []    # WP max curvature penalty. This is 0 if below threshold
 outputs['vmec'] = dict()
 outputs['vmec']['fsqr'] = []        # Force balance error in VMEC, radial direction ?
 outputs['vmec']['fsqz'] = []        # Force balance error in VMEC, vertical direction ?
@@ -760,10 +677,6 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         outputs['min_CS'].append(np.nan)
         outputs['min_CC'].append(np.nan)
         outputs['IL_length'].append(np.nan)
-        if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0: 
-            outputs['WP_length'].append([np.nan for l in wp_lengths])
-            outputs['WP_msc'].append([np.nan for msc in wp_msc])
-            outputs['WP_max_curvature'].append([np.nan for c in wp_curvatures])
         outputs['IL_msc'].append(np.nan)
         outputs['IL_max_curvature'].append(np.nan)
 
@@ -796,10 +709,6 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         outputs['min_CS'].append(float(Jcsdist.shortest_distance()))
         outputs['min_CC'].append(float(Jccdist.shortest_distance()))
         outputs['IL_length'].append(float(il_length.J()))
-        if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0: 
-            outputs['WP_length'].append([float(l.J()) for l in wp_lengths])
-            outputs['WP_msc'].append([float(msc.J()) for msc in wp_msc])
-            outputs['WP_max_curvature'].append([float(c.J()) for c in wp_curvatures])
         outputs['IL_msc'].append(float(il_msc.J()))
         outputs['IL_max_curvature'].append(float(il_curvature.J()))
 
@@ -814,9 +723,6 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         outstr += f", C-C-Sep={outputs['min_CC'][-1]:.5E}"
         outstr += f", C-S-Sep={outputs['min_CS'][-1]:.5E}"
         outstr += f"IL length={outputs['IL_length'][-1]:.5E},  IL ∫ϰ²/L={outputs['IL_msc'][-1]:.5E},  IL ∫max(ϰ-ϰ0,0)^2={outputs['IL_max_curvature'][-1]:.5E}\n"
-        if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
-            for i, (l, msc, jcs) in enumerate(zip(outputs['WP_length'][-1], outputs['WP_msc'][-1], outputs['WP_max_curvature'][-1])):
-                outstr += f"WP_{i:02.0d} length={l:.5E}, ∫ϰ²/L={msc:.5E}, ∫max(ϰ-ϰ0,0)^2={jcs:.5E}\n" 
         outstr += f"\n"
                 
         # Evaluate Jacobian - this is some magic math copied from Rogerio's code
