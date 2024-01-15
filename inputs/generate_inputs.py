@@ -1,29 +1,31 @@
 import os
-import single_stage_cnt32
+import single_stage_cnt32 as input_file
+#import single_stage_cnt32_with_WP as input_file
 import numpy as np
 from simsopt.objectives import Weight
 import pickle
 import os
 
-inputs = single_stage_cnt32.inputs
-input_dir = 'cnt32_staged'
+inputs = input_file.inputs
+input_dir = f"opt_09"
 os.makedirs( input_dir, exist_ok=True )
+output_dir = "runs/opt_09"
 
 res = 3
 
 # Stage approach
 last_dir = ''
-for ii, morn in enumerate([1,2,3,4,5]):
+for ii, morn in enumerate([1,2,3,4,5,6]):
     # Set parameter space:
     inputs['vmec']['dofs']['mpol'] = morn
-    inputs['vmec']['dofs']['mpol'] = morn
+    inputs['vmec']['dofs']['ntor'] = morn
 
     # Increase VMEC resolution accordingly
     inputs['vmec']['internal_mpol'] = morn+2
     inputs['vmec']['internal_ntor'] = morn+2
 
     # Set output directory
-    inputs['directory'] = f'runs/cnt32_staged_M=N={morn:d}'
+    inputs['directory'] = output_dir + f"/M=N={morn:d}"
 
     # If not first run, depend on previous runs
     if ii>0:
@@ -32,7 +34,7 @@ for ii, morn in enumerate([1,2,3,4,5]):
 
 
     # Save input
-    with open(os.path.join(input_dir, f'input_cnt32_{ii:d}.pckl'), 'wb') as f:
+    with open(os.path.join(input_dir, f'input_{ii:d}.pckl'), 'wb') as f:
         pickle.dump( inputs, f )
 
     # Update last directory

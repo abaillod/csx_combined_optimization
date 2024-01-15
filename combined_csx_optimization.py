@@ -651,10 +651,25 @@ class quasisymmetry(Optimizable):
                 f.write(f"Error evaluating QS! ")
             return np.nan
 
+class volume(Optimizable):
+    def __init__(self, surf):
+        self.surf = surf
+        super().__init__(depends_on=[surf])
+    def J(self):
+        try:
+            return self.surf.volume()
+        except ObjectiveFailure:
+            with open(os.path.join(this_path, 'log.txt'), 'a') as f:
+                f.write(f"Error evaluating Volume! ")
+            return np.nan
+            
+
+
 J_iota = inputs['vmec']['target']['iota_weight'] * QuadraticPenalty(remake_iota(vmec), inputs['vmec']['target']['iota'], inputs['vmec']['target']['iota_constraint_type'])
 J_aspect = inputs['vmec']['target']['aspect_ratio_weight'] * QuadraticPenalty(remake_aspect(vmec), inputs['vmec']['target']['aspect_ratio'], inputs['vmec']['target']['aspect_ratio_constraint_type'])
-J_qs = QuadraticPenalty(quasisymmetry(qs), 0, 'identity')
-Jplasma = J_qs + J_iota + J_aspect 
+J_qs = QuadraticPenalty(quasisymmetry(qs), 0, 'identity') 
+J_volume =  inputs['vmec']['target']['volume_weight'] * QuadraticPenalty( volume( surf ),  inputs['vmec']['target']['volume'],  inputs['vmec']['target']['volume_constraint_type'] )
+Jplasma = J_qs + J_iota + J_aspect + J_volume
 
 # Define VMEC dofs
 vmec.fix_all()

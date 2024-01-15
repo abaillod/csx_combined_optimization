@@ -1,14 +1,13 @@
 #!/bin/sh
 
-for ii in 0 1 2 3 4 
+for ii in 0 1 2 3 4 5 
 do 
-	echo ii
 	if [ $ii -eq 0 ]
 	then
-		jid=$(sbatch --parsable run_combined_approach_pickle.sb inputs/cnt32_staged/input_cnt32_${ii}.pckl --pickle)
+		jid=$(sbatch --parsable run_combined_approach_pickle.sb inputs/$1/input_${ii}.pckl --pickle)
 		echo "Starting job ${jid}"
 	else
-		jid=$(sbatch --parsable --dependency=afterok:$jid run_combined_approach_pickle.sb inputs/cnt32_staged/input_cnt32_${ii}.pckl)
+		jid=$(sbatch --parsable --dependency=afterok:$jid run_combined_approach_pickle.sb inputs/$1/input_${ii}.pckl)
 		echo "Starting job ${jid}"
 	fi
 done
