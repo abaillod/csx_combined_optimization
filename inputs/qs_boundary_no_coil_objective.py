@@ -1,3 +1,10 @@
+"""
+Stage 2 optimization
+
+Running this input file will ignore all the single-stage
+optimization; only the stage two optimization will be performed
+"""
+
 from simsopt.objectives import Weight
 import numpy as np
 
@@ -86,8 +93,8 @@ inputs['wp_coils']['target']['current_weight'] = Weight(0)
 
 # NUMERICS
 inputs['numerics'] = dict()
-inputs['numerics']['MAXITER_stage_1'] = 0 # NUmber of iteration for initial stage two optimization
-inputs['numerics']['MAXITER_stage_2'] = 100 # NUmber of iteration for combined optimization
+inputs['numerics']['MAXITER_stage_2'] = 100 # NUmber of iteration for initial stage two optimization
+inputs['numerics']['MAXITER_single_stage'] = 0 # NUmber of iteration for combined optimization
 inputs['numerics']['fndiff_method'] = "forward"
 inputs['numerics']['finite_difference_abs_step'] = 1E-8
 inputs['numerics']['finite_difference_rel_step'] = 1E-5

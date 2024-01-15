@@ -1,3 +1,8 @@
+"""
+Optimization of CSSC rescaled
+
+"""
+
 from simsopt.objectives import Weight
 import numpy as np
 
@@ -13,8 +18,7 @@ inputs['directory'] = 'runs/single_stage_constrained_optimization_002'
 
 # SURFACE
 inputs['vmec'] = dict()
-inputs['vmec']['filename'] = 'runs/stage_1_mpol=ntor=2_constrained/input.final' 
-#inputs['vmec']['filename'] = 'vmec_inputs/input.tokamak' 
+inputs['vmec']['filename'] = 'inputs/vmec_inputs/input.vacuum_cssc_scaled' 
 inputs['vmec']['verbose'] = False
 inputs['vmec']['nphi'] = 34
 inputs['vmec']['ntheta'] = 34

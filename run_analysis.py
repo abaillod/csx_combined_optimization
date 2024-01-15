@@ -80,6 +80,24 @@ plt.savefig(os.path.join(figure_path, 'magnetic_well'))
 if args.show:
     plt.show()
 
+# Plot B.n
+bs = load(os.path.join(this_path, 'coils/bs_output.json'))
+surf = v.boundary
+theta = surf.quadpoints_theta
+phi = surf.quadpoints_phi
+ntheta = theta.size
+nphi = phi.size
+bs.set_points(surf.gamma().reshape((-1,3)))
+Bdotn = np.sum(bs.B().reshape((nphi, ntheta, 3)) * surf.unitnormal(), axis=2)
+
+fig, ax = plt.subplots(figsize=(12,5))
+c = ax.contourf(theta,phi,Bdotn)
+plt.colorbar(c)
+ax.set_title(r'Initial $\mathbf{B}\cdot\hat{n}$ on CSSC surface')
+ax.set_ylabel(r'$\phi$')
+ax.set_xlabel(r'$\theta$')
+plt.savefig(os.path.join(figure_path, 'normal_field_error.png'))
+
 # Run and plot Poincare section
 bs = load(os.path.join(this_path, 'coils/bs_output.json'))
 vmec_surf = SurfaceRZFourier.from_wout(v.output_file) # vmec surface
