@@ -1,3 +1,8 @@
+"""
+Input file modified from grace_input.py to run at
+lower VMEC resolution and lower number of coil dofs
+"""
+
 from simsopt.objectives import Weight
 import numpy as np
 
@@ -80,8 +85,8 @@ inputs['wp_coils']['target']['current_weight'] = Weight(1E-5)
 
 # NUMERICS
 inputs['numerics'] = dict()
-inputs['numerics']['MAXITER_stage_1'] = 10 # NUmber of iteration for initial stage two optimization
-inputs['numerics']['MAXITER_stage_2'] = 50 # NUmber of iteration for combined optimization
+inputs['numerics']['MAXITER_stage_2'] = 10 # NUmber of iteration for initial stage two optimization
+inputs['numerics']['MAXITER_single_stage'] = 50 # NUmber of iteration for combined optimization
 inputs['numerics']['fndiff_method'] = "forward"
 inputs['numerics']['finite_difference_abs_step'] = 0
 inputs['numerics']['finite_difference_rel_step'] = 1E-5

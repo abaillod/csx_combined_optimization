@@ -48,7 +48,7 @@ inputs['cnt_coils']['dofs']['PF_current_free'] = True  # Set to True to unfix PF
 inputs['cnt_coils']['target'] = dict()
 inputs['cnt_coils']['target']['IL_length'] = 3                   # Maximum length for IL coils
 inputs['cnt_coils']['target']['IL_length_weight'] = Weight(1E-5) # Weight on IL length penalty
-inputs['cnt_coils']['target']['IL_length_constraint_type'] = 'max'
+inputs['cnt_coils']['target']['IL_length_constraint_type'] = 'max' # Can be 'max', 'min', or 'identity'
 inputs['cnt_coils']['target']['IL_msc_threshold'] = 10           # Maximum mean curvature of IL coils
 inputs['cnt_coils']['target']['IL_msc_weight'] = Weight(1)       # Weight on IL mean curvature penalty
 inputs['cnt_coils']['target']['IL_maxc_threshold'] = 20          # Maximum local curvature of IL coils
@@ -70,7 +70,7 @@ inputs['wp_coils']['geometry']['Z0'] = [0]  # Number of "rows" of WP coils
 inputs['wp_coils']['dofs'] = dict()
 inputs['wp_coils']['dofs']['order'] = 2     # The xn, yn, zn with |n|<=order will be unfixed
 inputs['wp_coils']['dofs']['planar'] = True # Enforce coils to remain planar if True (fix all yn)
-inputs['cnt_coils']['dofs']['R00_free'] = False
+inputs['cnt_coils']['dofs']['R00_free'] = False # Wether or not the R00 harmonic should be free
 
 inputs['wp_coils']['target'] = dict()
 inputs['wp_coils']['target']['length'] = inputs['cnt_coils']['target']['IL_length'] / 3 # max length for WP coils
@@ -82,18 +82,18 @@ inputs['wp_coils']['target']['maxc_threshold'] = 50           # Maximum local cu
 inputs['wp_coils']['target']['maxc_weight'] = Weight(0)       # Weight on WP local curvature
 inputs['wp_coils']['target']['current_threshold'] = 1E+5      # Maximum current in WP coils
 inputs['wp_coils']['target']['current_weight'] = Weight(1E-5) # Weight on WP maximum current penalty
-inputs['cnt_coils']['target']['IL_maxR_threshold'] = 0.65  
-inputs['cnt_coils']['target']['IL_maxR_weight'] = Weight(1)
-inputs['cnt_coils']['target']['IL_maxZ_threshold'] = 0.75  
-inputs['cnt_coils']['target']['IL_maxZ_weight'] = Weight(1)
+inputs['cnt_coils']['target']['IL_maxR_threshold'] = 0.65     # Max radial position of coils - can be used to constrain coils to remain in the vessel
+inputs['cnt_coils']['target']['IL_maxR_weight'] = Weight(1)   # Weight on max radial position
+inputs['cnt_coils']['target']['IL_maxZ_threshold'] = 0.75     # Max vertical position of coils
+inputs['cnt_coils']['target']['IL_maxZ_weight'] = Weight(1)   # Weight on max vertical position
 
 
 # NUMERICS
 inputs['numerics'] = dict()
 inputs['numerics']['MAXITER_stage_2'] = 10 # NUmber of iteration for initial stage two optimization
 inputs['numerics']['MAXITER_single_stage'] = 10 # NUmber of iteration for combined optimization
-inputs['numerics']['fndiff_method'] = "forward"
-inputs['numerics']['finite_difference_abs_step'] = 0
-inputs['numerics']['finite_difference_rel_step'] = 1E-5
+inputs['numerics']['fndiff_method'] = "forward" # Method to evaluate the finite differences. Either 'forward', 'centered', or 'backward'
+inputs['numerics']['finite_difference_abs_step'] = 0     # Default value is 1E-7
+inputs['numerics']['finite_difference_rel_step'] = 1E-5  # Default value is 0
 inputs['numerics']['JACOBIAN_THRESHOLD'] = 100
 inputs['numerics']['taylor_test'] = False

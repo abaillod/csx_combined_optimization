@@ -1,3 +1,11 @@
+"""
+Optimization of CNT 32
+
+This input optimizes the CNT 32 configuration for better
+quasisymmetry, while constraining the rotational transform
+and the aspect ratio to remain above a threshold
+"""
+
 from simsopt.objectives import Weight
 import numpy as np
 
