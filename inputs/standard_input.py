@@ -17,13 +17,15 @@ inputs['vmec']['filename'] = 'inputs/vmec_inputs/input.CSSCscaled3' # Input file
 inputs['vmec']['verbose'] = False                # Set to True for additional VMEC messages (useful for debug)
 inputs['vmec']['nphi'] = 34                      # VMEC toroidal resolution in real space
 inputs['vmec']['ntheta'] = 34                    # VMEC poloidal resolution in real space
+inputs['vmec']['internal_mpol'] = 2 
+inputs['vmec']['internal_ntor'] = 2
 
 inputs['vmec']['dofs'] = dict() 
-inputs['vmec']['dofs']['internal_mpol'] = 2 # VMEC boundary dofs with  m<=mpol will be unfixed
-inputs['vmec']['dofs']['internal_ntor'] = 2 # VMEC boundary dofs with |n|<= ntor will be unfixed
+inputs['vmec']['dofs']['mpol'] = 2 # VMEC boundary dofs with  m<=mpol will be unfixed
+inputs['vmec']['dofs']['ntor'] = 2 # VMEC boundary dofs with |n|<= ntor will be unfixed
 
 inputs['vmec']['target'] = dict()
-inputs['vmec']['target']['aspect_ratio'] = 3.5                             # Target value for boundary aspect ratio
+inputs['vmec']['target']['aspect_ratio'] = 2                             # Target value for boundary aspect ratio
 inputs['vmec']['target']['aspect_ratio_weight'] = Weight(1E+1)             # Weight for aspect ratio target
 inputs['vmec']['target']['aspect_ratio_constraint_type'] = 'identity'               # Identity for target, max or min for constraint
 inputs['vmec']['target']['iota'] = -0.2                                    # Target value for mean iota
@@ -55,6 +57,10 @@ inputs['cnt_coils']['target']['IL_maxc_threshold'] = 20          # Maximum local
 inputs['cnt_coils']['target']['IL_maxc_weight'] = Weight(1)      # Weight on IL local curvature penalty
 inputs['cnt_coils']['target']['PF_current_threshold'] = 1E+9     # Maximum PF current value
 inputs['cnt_coils']['target']['PF_current_weight'] = Weight(1)   # Weight on PF current penalty
+inputs['cnt_coils']['target']['IL_maxR_threshold'] = 0.65     # Max radial position of coils - can be used to constrain coils to remain in the vessel
+inputs['cnt_coils']['target']['IL_maxR_weight'] = Weight(1)   # Weight on max radial position
+inputs['cnt_coils']['target']['IL_maxZ_threshold'] = 0.75     # Max vertical position of coils
+inputs['cnt_coils']['target']['IL_maxZ_weight'] = Weight(1)   # Weight on max vertical position
 
 ## Windowpane coils related inputs
 inputs['wp_coils'] = dict()
@@ -82,10 +88,6 @@ inputs['wp_coils']['target']['maxc_threshold'] = 50           # Maximum local cu
 inputs['wp_coils']['target']['maxc_weight'] = Weight(0)       # Weight on WP local curvature
 inputs['wp_coils']['target']['current_threshold'] = 1E+5      # Maximum current in WP coils
 inputs['wp_coils']['target']['current_weight'] = Weight(1E-5) # Weight on WP maximum current penalty
-inputs['cnt_coils']['target']['IL_maxR_threshold'] = 0.65     # Max radial position of coils - can be used to constrain coils to remain in the vessel
-inputs['cnt_coils']['target']['IL_maxR_weight'] = Weight(1)   # Weight on max radial position
-inputs['cnt_coils']['target']['IL_maxZ_threshold'] = 0.75     # Max vertical position of coils
-inputs['cnt_coils']['target']['IL_maxZ_weight'] = Weight(1)   # Weight on max vertical position
 
 
 # NUMERICS
@@ -93,7 +95,7 @@ inputs['numerics'] = dict()
 inputs['numerics']['MAXITER_stage_2'] = 10 # NUmber of iteration for initial stage two optimization
 inputs['numerics']['MAXITER_single_stage'] = 10 # NUmber of iteration for combined optimization
 inputs['numerics']['fndiff_method'] = "forward" # Method to evaluate the finite differences. Either 'forward', 'centered', or 'backward'
-inputs['numerics']['finite_difference_abs_step'] = 0     # Default value is 1E-7
-inputs['numerics']['finite_difference_rel_step'] = 1E-5  # Default value is 0
+inputs['numerics']['finite_difference_abs_step'] = 1E-7     # Default value is 1E-7
+inputs['numerics']['finite_difference_rel_step'] = 0        # Default value is 0
 inputs['numerics']['JACOBIAN_THRESHOLD'] = 100
 inputs['numerics']['taylor_test'] = False
