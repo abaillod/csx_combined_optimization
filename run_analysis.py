@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from simsopt.field import SurfaceClassifier, \
     particles_to_vtk, compute_fieldlines, LevelsetStoppingCriterion, plot_poincare_data
+from simsopt.geo import CurveLength
 
 
 # Read command line arguments
@@ -27,8 +28,8 @@ os.chdir(this_path)
 
 
 v = Vmec('input.final')
+bs = load(os.path.join(this_path, 'coils/bs_output.json'))
 v.run()
-
 
 # Run boozer
 b = bx.Booz_xform()
@@ -37,14 +38,36 @@ b.mboz = 48
 b.nboz = 48
 b.run()
 b.write_boozmn("boozmn.nc")
+s = b.s_b
 
+
+# Evaluate figures of merit
 bmnc = b.bmnc_b
 xm = b.xm_b
 xn = b.xn_b
 f = np.sqrt(np.sum(bmnc[xn!=0,:]**2,axis=0)/np.sum(bmnc**2,axis=0))
-print('Mean QA metric: ',np.mean(f))
-print('Mean iota: ',np.mean(b.iota))
-s = b.s_b
+fqs = np.mean(f)
+mean_iota = np.mean(b.iota)
+volume = v.boundary.volume()
+major_radius = v.boundary.major_radius()
+minor_radius = v.boundary.minor_radius()
+aspect_ratio = v.boundary.aspect_ratio()
+il_current = np.abs(bs.coils[0].current.get_value())
+pf_current = np.abs(bs.coils[2].current.get_value())
+ll = CurveLength( bs.coils[0].curve )
+il_length = ll.J()
+
+with open( os.path.join(this_path, 'figures_of_merit.txt'), 'w' ) as file:
+          file.write(f'Mean iota = {mean_iota:.2E}\n')
+          file.write(f'f_quasisymmetry = {fqs:.2E}\n')
+          file.write(f'Volume = {volume:.2E}\n')
+          file.write(f'Major radius = {major_radius:.2E}\n')
+          file.write(f'Minor radius = {minor_radius:.2E}\n')
+          file.write(f'Aspect ratio = {aspect_ratio:.2E}\n')
+          file.write(f'IL coil current = {il_current:.2E}\n')
+          file.write(f'PF coil current = {pf_current:.2E}\n')
+          file.write(f'IL coil length = {il_length:.2E}\n')
+
 
 # Plot quaissymmetry
 plt.figure()
@@ -81,7 +104,6 @@ if args.show:
     plt.show()
 
 # Plot B.n
-bs = load(os.path.join(this_path, 'coils/bs_output.json'))
 surf = v.boundary
 theta = surf.quadpoints_theta
 phi = surf.quadpoints_phi
