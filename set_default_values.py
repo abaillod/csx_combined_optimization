@@ -86,7 +86,18 @@ def set_default(inputs):
     if 'qa_nphi' not in inputs['vmec']['target'].keys():
         out = logprint('Setting default value for vmec target qa_nphi', out)
         inputs['vmec']['target']['qa_nphi'] = 64 
-
+    if 'volume' not in inputs['vmec']['target'].keys():
+        out = logprint('Setting default value for vmec target volume', out)
+        inputs['vmec']['target']['volume'] = 0.15
+    if 'volume_weight' not in inputs['vmec']['target'].keys():
+        out = logprint('Setting default value for vmec volume weight', out)
+        inputs['vmec']['target']['volume_weight'] = 0 
+    if 'volume_constraint_type' not in inputs['vmec']['target'].keys():
+        out = logprint('Setting default value for vmec volume_constraint_type', out)
+        inputs['vmec']['target']['volume_constraint_type'] = 'min'
+ 
+ 
+ 
 
 
     # COILS
