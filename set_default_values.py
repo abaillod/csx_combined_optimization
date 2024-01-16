@@ -95,10 +95,10 @@ def set_default(inputs):
     if 'volume_constraint_type' not in inputs['vmec']['target'].keys():
         out = logprint('Setting default value for vmec volume_constraint_type', out)
         inputs['vmec']['target']['volume_constraint_type'] = 'min'
+    if 'arclength_weight' not in inputs['cnt_coils']['target'].keys():
+        out = logprint('Setting default value for arc length weight', out)
+        inputs['cnt_coils']['target']['arclength_weight'] = Weight(1)
  
- 
- 
-
 
     # COILS
     if 'cnt_coils' not in inputs.keys():

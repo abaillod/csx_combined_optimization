@@ -441,6 +441,9 @@ il_curveZ_threshold = inputs['cnt_coils']['target']['IL_maxZ_threshold']
 il_curveZ_weight = inputs['cnt_coils']['target']['IL_maxZ_weight']
 Jcoils += il_curveZ_weight * LpCurveZ( il_base_curve, 2, il_curveZ_threshold )
 
+il_arclength_weight = inputs['cnt_coils']['target']['arclength_weight'] 
+Jcoils += il_arclength_weight * ArclengthVariation( il_base_curve )
+
 # WP penalties
 if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
     wp_lengths = [CurveLength( c ) for c in wp_base_curves]
