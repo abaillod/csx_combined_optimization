@@ -25,12 +25,12 @@ inputs['vmec']['dofs']['mpol'] = 2 # VMEC boundary dofs with  m<=mpol will be un
 inputs['vmec']['dofs']['ntor'] = 2 # VMEC boundary dofs with |n|<= ntor will be unfixed
 
 inputs['vmec']['target'] = dict()
-inputs['vmec']['target']['aspect_ratio'] = 2                             # Target value for boundary aspect ratio
+inputs['vmec']['target']['aspect_ratio'] = 2                               # Target value for boundary aspect ratio
 inputs['vmec']['target']['aspect_ratio_weight'] = Weight(1E+1)             # Weight for aspect ratio target
-inputs['vmec']['target']['aspect_ratio_constraint_type'] = 'identity'               # Identity for target, max or min for constraint
+inputs['vmec']['target']['aspect_ratio_constraint_type'] = 'identity'      # Identity for target, max or min for constraint
 inputs['vmec']['target']['iota'] = -0.2                                    # Target value for mean iota
 inputs['vmec']['target']['iota_weight'] = Weight(1E+2)                     # Weight for iota target
-inputs['vmec']['target']['iota_constraint_type'] = 'identity'               # Identity for target, max or min for constraint
+inputs['vmec']['target']['iota_constraint_type'] = 'identity'              # Identity for target, max or min for constraint
 inputs['vmec']['target']['qa_surface'] = np.linspace(0,1,11,endpoint=True) # Weight for QA is 1.
 inputs['vmec']['target']['qa_ntheta'] = 63                                 # Poloidal resolution for QS surfaces
 inputs['vmec']['target']['qa_nphi'] = 64                                   # Toroidal resolution for QS surfaces
@@ -57,10 +57,8 @@ inputs['cnt_coils']['target']['IL_maxc_threshold'] = 20          # Maximum local
 inputs['cnt_coils']['target']['IL_maxc_weight'] = Weight(1)      # Weight on IL local curvature penalty
 inputs['cnt_coils']['target']['PF_current_threshold'] = 1E+9     # Maximum PF current value
 inputs['cnt_coils']['target']['PF_current_weight'] = Weight(1)   # Weight on PF current penalty
-inputs['cnt_coils']['target']['IL_maxR_threshold'] = 0.65     # Max radial position of coils - can be used to constrain coils to remain in the vessel
-inputs['cnt_coils']['target']['IL_maxR_weight'] = Weight(1)   # Weight on max radial position
-inputs['cnt_coils']['target']['IL_maxZ_threshold'] = 0.75     # Max vertical position of coils
-inputs['cnt_coils']['target']['IL_maxZ_weight'] = Weight(1)   # Weight on max vertical position
+inputs['cnt_coils']['target']['IL_vessel_threshold'] = 0.05
+inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(1)
 
 ## Windowpane coils related inputs
 inputs['wp_coils'] = dict()

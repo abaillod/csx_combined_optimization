@@ -13,7 +13,6 @@ from simsopt.geo import CurveLength
 
 # Read command line arguments
 parser = argparse.ArgumentParser()
-
 parser.add_argument("--path", dest="path", default=None)
 parser.add_argument("--show", dest="show", default=False, action="store_true")
 
@@ -25,7 +24,6 @@ figure_path = os.path.join( this_path, 'figure')
 os.makedirs(figure_path, exist_ok=True)
 
 os.chdir(this_path)
-
 
 v = Vmec('input.final')
 bs = load(os.path.join(this_path, 'coils/bs_output.json'))
@@ -39,7 +37,6 @@ b.nboz = 48
 b.run()
 b.write_boozmn("boozmn.nc")
 s = b.s_b
-
 
 # Evaluate figures of merit
 bmnc = b.bmnc_b
@@ -111,11 +108,12 @@ ntheta = theta.size
 nphi = phi.size
 bs.set_points(surf.gamma().reshape((-1,3)))
 Bdotn = np.sum(bs.B().reshape((nphi, ntheta, 3)) * surf.unitnormal(), axis=2)
+modB = bs.AbsB().reshape((nphi,ntheta))
 
 fig, ax = plt.subplots(figsize=(12,5))
-c = ax.contourf(theta,phi,Bdotn)
+c = ax.contourf(theta,phi,Bdotn / modB)
 plt.colorbar(c)
-ax.set_title(r'Initial $\mathbf{B}\cdot\hat{n}$ on CSSC surface')
+ax.set_title(r'$\mathbf{B}\cdot\hat{n} / |B|$ ')
 ax.set_ylabel(r'$\phi$')
 ax.set_xlabel(r'$\theta$')
 plt.savefig(os.path.join(figure_path, 'normal_field_error.png'))
@@ -142,7 +140,7 @@ def trace_fieldlines(bfield,label):
     fieldlines_tys, fieldlines_phi_hits = compute_fieldlines(
         bfield, R0, Z0, tmax=tmax_fl, tol=1e-8,
         phis=phis, stopping_criteria=[LevelsetStoppingCriterion(sc_fieldline.dist)])
-    plot_poincare_data(fieldlines_phi_hits, phis, os.path.join(figure_path, 'poincare'), dpi=150,surf=vmec_surf,mark_lost=False)
+    plot_poincare_data(fieldlines_phi_hits, phis, os.path.join(figure_path, 'poincare'), dpi=150,surf=vmec_surf,mark_lost=True)
     return fieldlines_phi_hits
 
 hits = trace_fieldlines(bs, 'vmec')

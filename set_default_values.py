@@ -153,18 +153,12 @@ def set_default(inputs):
     if 'PF_current_weight' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target PF_current_weight', out)
         inputs['cnt_coils']['target']['PF_current_weight'] = Weight(1)   # Weight on PF current penalty
-    if 'IL_maxR_threshold' not in inputs['cnt_coils']['target'].keys():
-        out = logprint('Setting default value for cnt_coils target IL_maxR_threshold', out)
-        inputs['cnt_coils']['target']['IL_maxR_threshold'] = 0.65  
-    if 'IL_maxR_weight' not in inputs['cnt_coils']['target'].keys():
-        out = logprint('Setting default value for cnt_coils target IL_maxR_weight', out)
-        inputs['cnt_coils']['target']['IL_maxR_weight'] = Weight(1)
-    if 'IL_maxZ_threshold' not in inputs['cnt_coils']['target'].keys():
-        out = logprint('Setting default value for cnt_coils target IL_maxZ_threshold', out)
-        inputs['cnt_coils']['target']['IL_maxZ_threshold'] = 0.75  
-    if 'IL_maxZ_weight' not in inputs['cnt_coils']['target'].keys():
-        out = logprint('Setting default value for cnt_coils target IL_maxZ_weight', out)
-        inputs['cnt_coils']['target']['IL_maxZ_weight'] = Weight(1)
+    if 'IL_vessel_threshold' not in inputs['cnt_coils']['target'].keys():
+        out = logprint('Setting default value for cnt_coils target IL_vessel_threshold', out)
+        inputs['cnt_coils']['target']['IL_vessel_threshold'] = 0.05
+    if 'IL_vessel_weight' not in inputs['cnt_coils']['target'].keys():
+        out = logprint('Setting default value for cnt_coils target IL_vessel_weight', out)
+        inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(1)
 
         
     ## Windowpane coils related inputs

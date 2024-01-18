@@ -61,6 +61,8 @@ import jax.numpy as jnp
 from simsopt.geo.jit import jit
 from simsopt._core.derivative import derivative_dec
 
+from vacuum_vessel import CSX_VacuumVessel
+
 # Read command line arguments
 parser = argparse.ArgumentParser()
 
@@ -317,97 +319,6 @@ if comm.rank==0:
 
 
 # =================================================================================================
-# DEFINE NEW PENALTIES
-
-@jit
-def Lp_R_pure(gamma, gammadash, p, Rmax):
-    """
-    This function is used in a Python+Jax implementation of the curvature penalty term.
-    """
-    arc_length = jnp.linalg.norm(gammadash, axis=1)
-    R = jnp.sqrt(gamma[:,0]**2 + gamma[:,2]**2)
-    return (1./p)*jnp.mean(jnp.maximum(R-Rmax, 0)**p * arc_length)
-
-
-class LpCurveR(Optimizable):
-    r"""
-    This class computes a penalty term based on the maximum R position of a curve.
-    Used to constrain the coil to remain within a cylindrical vessel
-    """
-
-    def __init__(self, curve, p, threshold=0.0):
-        self.curve = curve
-        self.p = p
-        self.threshold = threshold
-        super().__init__(depends_on=[curve])
-        self.J_jax = jit(lambda gamma, gammadash: Lp_R_pure(gamma, gammadash, p, threshold))
-        self.thisgrad0 = jit(lambda gamma, gammadash: grad(self.J_jax, argnums=0)(gamma, gammadash))
-        self.thisgrad1 = jit(lambda gamma, gammadash: grad(self.J_jax, argnums=1)(gamma, gammadash))
-
-    def J(self):
-        """
-        This returns the value of the quantity.
-        """
-        return self.J_jax(self.curve.gamma(), self.curve.gammadash())
-
-    @derivative_dec
-    def dJ(self):
-        """
-        This returns the derivative of the quantity with respect to the curve dofs.
-        """
-        grad0 = self.thisgrad0(self.curve.gamma(), self.curve.gammadash())
-        grad1 = self.thisgrad1(self.curve.gamma(), self.curve.gammadash())
-        
-        return self.curve.dgamma_by_dcoeff_vjp(grad0) + self.curve.dgammadash_by_dcoeff_vjp(grad1)
-
-    return_fn_map = {'J': J, 'dJ': dJ}
-
-@jit
-def Lp_Z_pure(gamma, gammadash, p, Zmax):
-    """
-    This function is used in a Python+Jax implementation of the curvature penalty term.
-    """
-    arc_length = jnp.linalg.norm(gammadash, axis=1)
-    Z = gamma[:,1]
-    return (1./p)*jnp.mean(jnp.maximum(Z-Zmax, 0)**p * arc_length)
-
-
-class LpCurveZ(Optimizable):
-    r"""
-    This class computes a penalty term based on the maximum |Z| position of a curve.
-    Used to constrain the coil to remain within a cylindrical vessel
-    """
-
-    def __init__(self, curve, p, threshold=0.0):
-        self.curve = curve
-        self.p = p
-        self.threshold = threshold
-        super().__init__(depends_on=[curve])
-        self.J_jax = jit(lambda gamma, gammadash: Lp_Z_pure(gamma, gammadash, p, threshold))
-        self.thisgrad0 = jit(lambda gamma, gammadash: grad(self.J_jax, argnums=0)(gamma, gammadash))
-        self.thisgrad1 = jit(lambda gamma, gammadash: grad(self.J_jax, argnums=1)(gamma, gammadash))
-
-    def J(self):
-        """
-        This returns the value of the quantity.
-        """
-        return self.J_jax(self.curve.gamma(), self.curve.gammadash())
-
-    @derivative_dec
-    def dJ(self):
-        """
-        This returns the derivative of the quantity with respect to the curve dofs.
-        """
-        grad0 = self.thisgrad0(self.curve.gamma(), self.curve.gammadash())
-        grad1 = self.thisgrad1(self.curve.gamma(), self.curve.gammadash())
-        
-        return self.curve.dgamma_by_dcoeff_vjp(grad0) + self.curve.dgammadash_by_dcoeff_vjp(grad1)
-
-    return_fn_map = {'J': J, 'dJ': dJ}
-
-
-
-# =================================================================================================
 # RUN STAGE TWO OPTIMIZATION
 # --------------------------------
 # We begin with a stage two optimization to get the coils as close as possible to the VMEC 
@@ -433,13 +344,12 @@ il_msc_threshold = inputs['cnt_coils']['target']['IL_msc_threshold']
 il_msc_weight = inputs['cnt_coils']['target']['IL_msc_weight']
 Jcoils += il_msc_weight * QuadraticPenalty(il_msc, il_msc_threshold, f='max')
 
-il_curveR_threshold = inputs['cnt_coils']['target']['IL_maxR_threshold'] 
-il_curveR_weight = inputs['cnt_coils']['target']['IL_maxR_weight']
-Jcoils += il_curveR_weight * LpCurveR( il_base_curve, 2, il_curveR_threshold )
-
-il_curveZ_threshold = inputs['cnt_coils']['target']['IL_maxZ_threshold'] 
-il_curveZ_weight = inputs['cnt_coils']['target']['IL_maxZ_weight']
-Jcoils += il_curveZ_weight * LpCurveZ( il_base_curve, 2, il_curveZ_threshold )
+il_vessel_threshold = inputs['cnt_coils']['target']['IL_vessel_threshold'] 
+il_vessel_weight = inputs['cnt_coils']['target']['IL_vessel_weight']
+if il_vessel_threshold>=0 and il_vessel_weight.value!=0:
+    raise ValueError('il_vessel_threshold should be smaller than 0!')
+vessel = CSX_VacuumVessel()
+Jcoils += il_vessel_weight * CurveSurfaceDistance( [il_base_curve], vessel, il_vessel_threshold )
 
 il_arclength_weight = inputs['cnt_coils']['target']['arclength_weight'] 
 Jcoils += il_arclength_weight * ArclengthVariation( il_base_curve )
