@@ -1,16 +1,26 @@
 import os
-import single_stage_cnt32 as input_file
+import continue_optimization as input_file
 #import single_stage_cnt32_with_WP as input_file
 import numpy as np
 from simsopt.objectives import Weight
 import pickle
 import os
+import argparse
+
+
+# Read command line arguments
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--opt", dest="opt", default=0)
+
+# Prepare args
+args = parser.parse_args()
+
+input_dir = f"opt_{args.opt}"
+os.makedirs( input_dir, exist_ok=True )
+output_dir = f"runs/opt_{args.opt}"
 
 inputs = input_file.inputs
-input_dir = f"opt_09"
-os.makedirs( input_dir, exist_ok=True )
-output_dir = "runs/opt_09"
-
 res = 3
 
 # Stage approach
