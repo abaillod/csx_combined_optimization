@@ -86,6 +86,7 @@ inputs['wp_coils']['target']['maxc_threshold'] = 50           # Maximum local cu
 inputs['wp_coils']['target']['maxc_weight'] = Weight(0)       # Weight on WP local curvature
 inputs['wp_coils']['target']['current_threshold'] = 1E+5      # Maximum current in WP coils
 inputs['wp_coils']['target']['current_weight'] = Weight(1E-5) # Weight on WP maximum current penalty
+inputs['wp_coils']['target']['winding_surface_weight'] = Weight(1E3)
 
 
 # NUMERICS

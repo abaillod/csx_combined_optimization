@@ -222,6 +222,9 @@ def set_default(inputs):
     if 'current_weight' not in inputs['wp_coils']['target'].keys():
         out = logprint('Setting default value for wp_coils target current_weight', out)
         inputs['wp_coils']['target']['current_weight'] = Weight(1E-5) # Weight on WP maximum current penalty
+    if 'winding_surface_weight' not in inputs['wp_coils']['target']:
+        out = logprint('Setting default value for wp_coils target winding_surface_weight', out)
+        inputs['wp_coils']['target']['winding_surface_weight'] = Weight(1E3)
         
         
     # NUMERICS

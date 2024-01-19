@@ -137,9 +137,10 @@ def normal( tarr, zarr, params ):
 
 
 class CSX_VacuumVessel:
-    def __init__(self, ntheta=64, nz = 32):
+    def __init__(self, ntheta=64, nz = 32, scale=1):
         f = 0.0254 # inch to meters
         epsilon = 0.1
+        self.scale = scale
         
         # Vessel Params
         params = dict()
@@ -151,12 +152,9 @@ class CSX_VacuumVessel:
         # Elliptical head radii
         params['DR'] = params['barrel_OD'] * 0.9
         params['KR'] = params['barrel_OD'] * 0.173
-        
         params['head_thickness'] = 0.3125
-        
         params['flange_height'] = params['flange_gap'] + params['barrel_height']/2
         params['KR_height_top'] = 8.991611 + params['flange_gap'] + params['barrel_height']/2
-        
         params['KR_height_bottom'] = -8.991611 - params['barrel_height']/2
         params['KR_centerR'] = 19.62
         params['DR_height_top'] = params['flange_height'] + 14.729061
@@ -172,7 +170,7 @@ class CSX_VacuumVessel:
 
 
     def gamma(self):
-        return self.gamma_stack
+        return self.gamma_stack * self.scale
 
     def normal(self):
         return self.unit_normal_stack
