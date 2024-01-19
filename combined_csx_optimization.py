@@ -62,6 +62,7 @@ from simsopt.geo.jit import jit
 from simsopt._core.derivative import derivative_dec
 
 from vacuum_vessel import CSX_VacuumVessel
+from simsopt.geo import WindingSurface
 
 # Read command line arguments
 parser = argparse.ArgumentParser()
@@ -372,6 +373,10 @@ if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
     wp_msc_threshold = inputs['wp_coils']['target']['msc_threshold']
     wp_msc_weight = inputs['wp_coils']['target']['msc_weight']
     Jcoils += wp_msc_weight * sum([QuadraticPenalty(msc, wp_msc_threshold, f='max') for msc in wp_msc])
+    
+    winding_surf = CSX_VacuumVessel(scale = 0.8)
+    wp_sw_weight = inputs['wp_coils']['target']['winding_surface_weight']
+    Jcoils += wp_sw_weight * WindingSurface( wp_base_curves, winding_surf, 0.0 )
 
 Jccdist = CurveCurveDistance(full_curves, inputs['CC_THRESHOLD'], num_basecurves=len(full_curves))
 Jcoils += Jccdist * inputs['CC_WEIGHT']
