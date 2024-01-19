@@ -349,7 +349,8 @@ il_vessel_weight = inputs['cnt_coils']['target']['IL_vessel_weight']
 if il_vessel_threshold>=0 and il_vessel_weight.value!=0:
     raise ValueError('il_vessel_threshold should be smaller than 0!')
 vessel = CSX_VacuumVessel()
-Jcoils += il_vessel_weight * CurveSurfaceDistance( [il_base_curve], vessel, il_vessel_threshold )
+vpenalty = il_vessel_weight * CurveSurfaceDistance( [il_base_curve], vessel, il_vessel_threshold )
+Jcoils += vpenalty
 
 il_arclength_weight = inputs['cnt_coils']['target']['arclength_weight'] 
 Jcoils += il_arclength_weight * ArclengthVariation( il_base_curve )
@@ -401,10 +402,12 @@ def fun_coils(dofs, info):
         Bbs = bs.B().reshape((nphi_VMEC, ntheta_VMEC, 3))
         BdotN_surf = np.sum(Bbs * surf.unitnormal(), axis=2)
         BdotN = np.mean(np.abs(BdotN_surf))
+        VP = vpenalty.J()
         outstr = f"fun_coils#{info['Nfeval']} - J={J:.1e}, square_flux={sqf:.1e}, ⟨B·n⟩={BdotN:.1e}" 
         outstr += f", ║∇J coils║={np.linalg.norm(Jcoils.dJ()):.1e}, C-C-Sep={Jccdist.shortest_distance():.2f}"
         outstr += f", C-S-Sep={Jcsdist.shortest_distance():.2f}"
         outstr += f"IL length={il_length.J():.2f},  IL ∫ϰ²/L={il_msc.J():.2f},  IL ∫max(ϰ-ϰ0,0)^2={il_curvature.J():.2f}\n"
+        outstr += f"Vessel penalty is {VP:.2E}\n"
         if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
             for i, (l, msc, jcs) in enumerate(zip(wp_lengths, wp_msc, wp_curvatures)):
                 outstr += f"WP_{i:02.0f} length={l.J():.2f},  WP_{i:02.0f} ∫ϰ²/L={msc.J():.2f},  WP_{i:02.0f} ∫max(ϰ-ϰ0,0)^2={jcs.J():.2f}\n" 
@@ -503,6 +506,7 @@ outputs['IL_msc'] = []              # Mean square curvature of IL coil
 outputs['WP_msc'] = []              # Mean square curvature of WP coils
 outputs['IL_max_curvature'] = []    # IL max curvature penalty. This is 0 if below threshold 
 outputs['WP_max_curvature'] = []    # WP max curvature penalty. This is 0 if below threshold
+outputs['vessel_penalty'] = []    
 outputs['vmec'] = dict()
 outputs['vmec']['fsqr'] = []        # Force balance error in VMEC, radial direction ?
 outputs['vmec']['fsqz'] = []        # Force balance error in VMEC, vertical direction ?
@@ -673,6 +677,7 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         outputs['min_CS'].append(np.nan)
         outputs['min_CC'].append(np.nan)
         outputs['IL_length'].append(np.nan)
+        outputs['vessel_penalty'].append(np.nan)
         if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0: 
             outputs['WP_length'].append([np.nan for l in wp_lengths])
             outputs['WP_msc'].append([np.nan for msc in wp_msc])
@@ -709,6 +714,7 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         outputs['min_CS'].append(float(Jcsdist.shortest_distance()))
         outputs['min_CC'].append(float(Jccdist.shortest_distance()))
         outputs['IL_length'].append(float(il_length.J()))
+        outputs['vessel_penalty'].append(float(vpenalty.J()))
         if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0: 
             outputs['WP_length'].append([float(l.J()) for l in wp_lengths])
             outputs['WP_msc'].append([float(msc.J()) for msc in wp_msc])
@@ -727,6 +733,7 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         outstr += f", C-C-Sep={outputs['min_CC'][-1]:.5E}"
         outstr += f", C-S-Sep={outputs['min_CS'][-1]:.5E}"
         outstr += f"IL length={outputs['IL_length'][-1]:.5E},  IL ∫ϰ²/L={outputs['IL_msc'][-1]:.5E},  IL ∫max(ϰ-ϰ0,0)^2={outputs['IL_max_curvature'][-1]:.5E}\n"
+        outstr += f"Vessel penalty is {outputs['vessel_penalty']:.2E}\n"
         if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
             for i, (l, msc, jcs) in enumerate(zip(outputs['WP_length'][-1], outputs['WP_msc'][-1], outputs['WP_max_curvature'][-1])):
                 outstr += f"WP_{i:02.0d} length={l:.5E}, ∫ϰ²/L={msc:.5E}, ∫max(ϰ-ϰ0,0)^2={jcs:.5E}\n" 
