@@ -733,7 +733,7 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         outstr += f", C-C-Sep={outputs['min_CC'][-1]:.5E}"
         outstr += f", C-S-Sep={outputs['min_CS'][-1]:.5E}"
         outstr += f"IL length={outputs['IL_length'][-1]:.5E},  IL ∫ϰ²/L={outputs['IL_msc'][-1]:.5E},  IL ∫max(ϰ-ϰ0,0)^2={outputs['IL_max_curvature'][-1]:.5E}\n"
-        outstr += f"Vessel penalty is {outputs['vessel_penalty']:.2E}\n"
+        outstr += f"Vessel penalty is {outputs['vessel_penalty'][-1]:.2E}\n"
         if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
             for i, (l, msc, jcs) in enumerate(zip(outputs['WP_length'][-1], outputs['WP_msc'][-1], outputs['WP_max_curvature'][-1])):
                 outstr += f"WP_{i:02.0d} length={l:.5E}, ∫ϰ²/L={msc:.5E}, ∫max(ϰ-ϰ0,0)^2={jcs:.5E}\n" 
