@@ -37,13 +37,13 @@ inputs['vmec']['target']['aspect_ratio'] = 2
 inputs['vmec']['target']['aspect_ratio_weight'] = Weight(0)
 inputs['vmec']['target']['aspect_ratio_constraint_type'] = 'max'               # Identity for target, max or min for constraint
 inputs['vmec']['target']['iota'] = -0.18
-inputs['vmec']['target']['iota_weight'] = Weight(5)
+inputs['vmec']['target']['iota_weight'] = Weight(10)
 inputs['vmec']['target']['iota_constraint_type'] = 'max'               # Identity for target, max or min for constraint
 inputs['vmec']['target']['qa_surface'] = np.linspace(0,1,10,endpoint=True) # Weight for QA is 1.
 inputs['vmec']['target']['qa_ntheta'] = 63
 inputs['vmec']['target']['qa_nphi'] = 64
-inputs['vmec']['target']['volume'] = 0.2
-inputs['vmec']['target']['volume_weight'] = Weight(1)
+inputs['vmec']['target']['volume'] = 0.15
+inputs['vmec']['target']['volume_weight'] = Weight(1E3)
 inputs['vmec']['target']['volume_constraint_type'] = 'min'
 
 # COILS
@@ -53,14 +53,14 @@ inputs['cnt_coils']['geometry'] = dict()
 inputs['cnt_coils']['geometry']['filename'] = 'inputs/coil_inputs/biotsavart_cnt32.json'
 
 inputs['cnt_coils']['dofs'] = dict()
-inputs['cnt_coils']['dofs']['IL_order'] = 5 # In G. Rawlinson input, this was 7
+inputs['cnt_coils']['dofs']['IL_order'] = 7 # In G. Rawlinson input, this was 7
 inputs['cnt_coils']['dofs']['IL_geometry_free'] = True
 inputs['cnt_coils']['dofs']['PF_current_free'] = True
 inputs['cnt_coils']['dofs']['R00_free'] = True
 
 inputs['cnt_coils']['target'] = dict()
-inputs['cnt_coils']['target']['IL_length'] = 4.0
-inputs['cnt_coils']['target']['IL_length_weight'] = Weight(1E-1)
+inputs['cnt_coils']['target']['IL_length'] = 4.5
+inputs['cnt_coils']['target']['IL_length_weight'] = Weight(1E-2)
 inputs['cnt_coils']['target']['IL_length_constraint_type'] = 'max'
 inputs['cnt_coils']['target']['IL_msc_threshold'] = 60
 inputs['cnt_coils']['target']['IL_msc_weight'] = Weight(1E-2)
@@ -68,10 +68,9 @@ inputs['cnt_coils']['target']['IL_maxc_threshold'] = 75
 inputs['cnt_coils']['target']['IL_maxc_weight'] = Weight(1E-2)
 inputs['cnt_coils']['target']['PF_current_threshold'] = 1E9 
 inputs['cnt_coils']['target']['PF_current_weight'] = Weight(0)
-inputs['cnt_coils']['target']['IL_maxR_threshold'] = 0.65  
-inputs['cnt_coils']['target']['IL_maxR_weight'] = Weight(10)
-inputs['cnt_coils']['target']['IL_maxZ_threshold'] = 0.75  
-inputs['cnt_coils']['target']['IL_maxZ_weight'] = Weight(10)
+inputs['cnt_coils']['target']['IL_vessel_threshold'] = Weight(0.16)
+inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(1E5)
+
 
 
 ## Windowpane coils related inputs
@@ -82,24 +81,24 @@ inputs['wp_coils']['geometry']['filename'] = None # if None, coils are initializ
 inputs['wp_coils']['geometry']['ncoil_per_row'] = 0 # total number of wp coils will be 
                                                     # nfp*size(Z0)*ncoil_per_row
                                                     # if zero, all WP penalty are unused
-inputs['wp_coils']['geometry']['R0'] = 0.3
-inputs['wp_coils']['geometry']['R1'] = 0.05
+inputs['wp_coils']['geometry']['R0'] = 0.7
+inputs['wp_coils']['geometry']['R1'] = 0.2
 inputs['wp_coils']['geometry']['Z0'] = [0]
 
 inputs['wp_coils']['dofs'] = dict()
 inputs['wp_coils']['dofs']['order'] = 2
-inputs['wp_coils']['dofs']['planar'] = True # Enforce coils to remain planar if True
+inputs['wp_coils']['dofs']['planar'] = False # Enforce coils to remain planar if True
 
 inputs['wp_coils']['target'] = dict()
-inputs['wp_coils']['target']['length'] = inputs['cnt_coils']['target']['IL_length'] / 3
-inputs['wp_coils']['target']['length_weight'] = Weight(0)
+inputs['wp_coils']['target']['length'] = 2.0
+inputs['wp_coils']['target']['length_weight'] = Weight(1E-2)
 inputs['wp_coils']['target']['length_constraint_type'] = 'max'
-inputs['wp_coils']['target']['msc_threshold'] = 20
-inputs['wp_coils']['target']['msc_weight'] = Weight(0)
-inputs['wp_coils']['target']['maxc_threshold'] = 50
-inputs['wp_coils']['target']['maxc_weight'] = Weight(0)
+inputs['wp_coils']['target']['msc_threshold'] = 60
+inputs['wp_coils']['target']['msc_weight'] = Weight(1E-2)
+inputs['wp_coils']['target']['maxc_threshold'] = 75
+inputs['wp_coils']['target']['maxc_weight'] = Weight(1E-2)
 inputs['wp_coils']['target']['current_threshold'] = 1E+5 
-inputs['wp_coils']['target']['current_weight'] = Weight(0)
+inputs['wp_coils']['target']['current_weight'] = Weight(1)
 
 
 # NUMERICS
@@ -108,7 +107,7 @@ inputs['numerics']['MAXITER_stage_2'] = 0 # NUmber of iteration for initial stag
 inputs['numerics']['MAXITER_single_stage'] = 5000 # NUmber of iteration for combined optimization
 inputs['numerics']['fndiff_method'] = "forward"
 inputs['numerics']['finite_difference_abs_step'] = 1E-7
-inputs['numerics']['finite_difference_rel_step'] = 1E-4
+inputs['numerics']['finite_difference_rel_step'] = 0
 inputs['numerics']['JACOBIAN_THRESHOLD'] = 1e3 # In G Rawlinson input, this was set to 1E2
 inputs['numerics']['algorithm'] = 'BFGS'
 
