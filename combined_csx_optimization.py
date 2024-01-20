@@ -61,7 +61,7 @@ import jax.numpy as jnp
 from simsopt.geo.jit import jit
 from simsopt._core.derivative import derivative_dec
 
-from vacuum_vessel import CSX_VacuumVessel
+from vacuum_vessel import CSX_VacuumVessel, VesselConstraint
 from simsopt.geo import WindingSurface
 
 # Read command line arguments
@@ -350,7 +350,7 @@ il_vessel_weight = inputs['cnt_coils']['target']['IL_vessel_weight']
 if il_vessel_threshold>=0 and il_vessel_weight.value!=0:
     raise ValueError('il_vessel_threshold should be smaller than 0!')
 vessel = CSX_VacuumVessel()
-vpenalty = il_vessel_weight * CurveSurfaceDistance( [il_base_curve], vessel, il_vessel_threshold )
+vpenalty = il_vessel_weight * VesselConstraint( [il_base_curve], vessel, il_vessel_threshold )
 Jcoils += vpenalty
 
 il_arclength_weight = inputs['cnt_coils']['target']['arclength_weight'] 

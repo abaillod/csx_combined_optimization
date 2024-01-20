@@ -1,6 +1,6 @@
 import os
-import continue_optimization as input_file
-#import single_stage_cnt32_with_WP as input_file
+#import continue_optimization as input_file
+import single_stage_cnt32 as input_file
 import numpy as np
 from simsopt.objectives import Weight
 import pickle

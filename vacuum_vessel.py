@@ -5,7 +5,14 @@ and to support the WP coils
 """
 
 from simsopt.geo import Surface
-import numpy as np
+from jax import grad
+import jax.numpy as jnp
+np = jnp
+
+from simsopt.geo.jit import jit
+from simsopt._core.optimizable import Optimizable
+from simsopt._core.derivative import derivative_dec, Derivative
+import simsoptpp as sopp
 
 def gamma( tarr, zarr, params ):        
     barrel_OD = params['barrel_OD']       
@@ -36,19 +43,19 @@ def gamma( tarr, zarr, params ):
         z = zarr[iz]
         #DR
         if (z>=KR_height_top): # ???????????
-            rarr[iz] = math.sqrt((DR-head_thickness)**2-(z-DR_height_top+(DR-head_thickness))**2)
+            rarr = rarr.at[iz].set( math.sqrt((DR-head_thickness)**2-(z-DR_height_top+(DR-head_thickness))**2) )
         #KR
         if (z>=flange_height and z<KR_height_top): # Second part of cap?
-            rarr[iz] = math.sqrt((KR-head_thickness)**2-(z-flange_height)**2)+KR_centerR
+            rarr = rarr.at[iz].set( math.sqrt((KR-head_thickness)**2-(z-flange_height)**2)+KR_centerR )
         #Barrel
         if (z>=-barrel_height/2 and z<flange_height): # cylindrical barrel
-            rarr[iz] = barrel_OD/2 - barrel_thickness 
+            rarr = rarr.at[iz].set( barrel_OD/2 - barrel_thickness )
         #KR
         if (z>=KR_height_bottom and z<-barrel_height/2):
-            rarr[iz] = math.sqrt((KR-head_thickness)**2-(z+barrel_height/2)**2)+KR_centerR              
+            rarr = rarr.at[iz].set( math.sqrt((KR-head_thickness)**2-(z+barrel_height/2)**2)+KR_centerR )
         #DR
         if (z<KR_height_bottom):
-            rarr[iz] = math.sqrt((DR-head_thickness)**2-(z-DR_height_bottom-(DR-head_thickness))**2)
+            rarr = rarr.at[iz].set( math.sqrt((DR-head_thickness)**2-(z-DR_height_bottom-(DR-head_thickness))**2) )
 
     
     
@@ -57,9 +64,9 @@ def gamma( tarr, zarr, params ):
     for it in range(nt):
         for iz in range(nz):
             counter+=1
-            out[counter,0] = rarr[iz] * np.sin( tarr[it] ) 
-            out[counter,1] = zarr[iz] 
-            out[counter,2] = rarr[iz] * np.cos( tarr[it] ) 
+            out = out.at[counter,0].set( rarr[iz] * np.sin( tarr[it] ) )
+            out = out.at[counter,1].set( zarr[iz] )
+            out = out.at[counter,2].set( rarr[iz] * np.cos( tarr[it] ) )
     
     return out
 
@@ -96,38 +103,37 @@ def normal( tarr, zarr, params ):
         z = zarr[iz]
         #DR
         if (z>=KR_height_top): # ???????????
-            rarr[iz] = math.sqrt((DR-head_thickness)**2-(z-DR_height_top+(DR-head_thickness))**2)
-            drdz[iz] = -(z-DR_height_top+(DR-head_thickness)) / rarr[iz]
+            rarr = rarr.at[iz].set( math.sqrt((DR-head_thickness)**2-(z-DR_height_top+(DR-head_thickness))**2) )
+            drdz = drdz.at[iz].set( -(z-DR_height_top+(DR-head_thickness)) / rarr[iz] )
         #KR
         if (z>=flange_height and z<KR_height_top): # Second part of cap?
-            rarr[iz] = math.sqrt((KR-head_thickness)**2-(z-flange_height)**2)+KR_centerR
-            drdz[iz] = (z-flange_height) / (KR_centerR - rarr[iz])
+            rarr = rarr.at[iz].set( math.sqrt((KR-head_thickness)**2-(z-flange_height)**2)+KR_centerR )
+            drdz = drdz.at[iz].set( (z-flange_height) / (KR_centerR - rarr[iz]) )
         #Barrel
         if (z>=-barrel_height/2 and z<flange_height): # cylindrical barrel
-            rarr[iz] = barrel_OD/2 - barrel_thickness 
-            drdz[iz] = 0
+            rarr = rarr.at[iz].set( barrel_OD/2 - barrel_thickness )
         #KR
         if (z>=KR_height_bottom and z<-barrel_height/2):
-            rarr[iz] = math.sqrt((KR-head_thickness)**2-(z+barrel_height/2)**2)+KR_centerR              
-            drdz[iz] = (z+barrel_height/2) / (KR_centerR - rarr[iz])
+            rarr = rarr.at[iz].set( math.sqrt((KR-head_thickness)**2-(z+barrel_height/2)**2)+KR_centerR )
+            drdz = drdz.at[iz].set( (z+barrel_height/2) / (KR_centerR - rarr[iz]) )
         #DR
         if (z<KR_height_bottom):
-            rarr[iz] = math.sqrt((DR-head_thickness)**2-(z-DR_height_bottom-(DR-head_thickness))**2)
-            drdz[iz] = -(z-DR_height_bottom-(DR-head_thickness)) / rarr[iz]
+            rarr = rarr.at[iz].set( math.sqrt((DR-head_thickness)**2-(z-DR_height_bottom-(DR-head_thickness))**2) )
+            drdz = drdz.at[iz].set( -(z-DR_height_bottom-(DR-head_thickness)) / rarr[iz] )
 
 
     dtheta = np.zeros((nt*nz, 3))
     dz = np.zeros((nt*nz, 3))
-    dz[:,1] = 1
+    dz = dz.at[:,1].set( 1 )
     counter=-1
     for it in range(nt):
         for iz in range(nz):
             counter+=1
-            dtheta[counter,0] = rarr[iz] * np.cos( tarr[it] )
-            dtheta[counter,2] =-rarr[iz] * np.sin( tarr[it] )
+            dtheta = dtheta.at[counter,0].set( rarr[iz] * np.cos( tarr[it] ) )
+            dtheta = dtheta.at[counter,2].set(-rarr[iz] * np.sin( tarr[it] ) )
             
-            dz[counter,0] = drdz[iz] * np.sin( tarr[it] )
-            dz[counter,2] = drdz[iz] * np.cos( tarr[it] )
+            dz = dz.at[counter,0].set( drdz[iz] * np.sin( tarr[it] ) )
+            dz = dz.at[counter,2].set( drdz[iz] * np.cos( tarr[it] ) )
     
     normal = np.cross( dtheta, dz )
     norm   = np.linalg.norm( normal, axis=1 )    
@@ -141,6 +147,9 @@ class CSX_VacuumVessel:
         f = 0.0254 # inch to meters
         epsilon = 0.1
         self.scale = scale
+
+        self.nz = nz
+        self.nt = ntheta
         
         # Vessel Params
         params = dict()
@@ -170,7 +179,93 @@ class CSX_VacuumVessel:
 
 
     def gamma(self):
-        return self.gamma_stack * self.scale
+        return self.gamma_stack.reshape((self.nz,self.nt,3)) * self.scale
 
     def normal(self):
         return self.unit_normal_stack
+    def unitnormal(self):
+        return self.unit_normal_stack
+
+def signed_distance_from_surface(xyz, surface):
+    """
+    Compute the signed distances from points ``xyz`` to a surface.  The sign is
+    positive for points inside the volume surrounded by the surface.
+    """
+    gammas = surface.gamma().reshape((-1, 3))
+    mins = jnp.argmin( jnp.sum((gammas[:, None, :] - xyz[None, :, :])**2, axis=2), axis=0 )
+
+    n = surface.unitnormal().reshape((-1, 3))
+    nmins = n[mins]
+    gammamins = gammas[mins]
+
+    # Now that we have found the closest node, we approximate the surface with
+    # a plane through that node with the appropriate normal and then compute
+    # the distance from the point to that plane
+    # https://stackoverflow.com/questions/55189333/how-to-get-distance-from-point-to-plane-in-3d
+    mindist = np.sum((xyz-gammamins) * nmins, axis=1)
+
+    a_point_in_the_surface = np.mean(surface.gamma()[0, :, :], axis=0)
+    sign_of_interiorpoint = np.sign(np.sum((a_point_in_the_surface-gammas[0, :])*n[0, :]))
+
+    signed_dists = mindist * sign_of_interiorpoint
+    return signed_dists
+
+
+
+
+def ws_distance_pure(gammac, v, minimum_distance):
+    """
+    This function is used in a Python+Jax implementation of the curve-surface distance
+    formula.
+    """
+    dists = signed_distance_from_surface( gammac, v )
+    out = jnp.mean( jnp.maximum(minimum_distance-dists, 0)**2)
+    return out
+
+class VesselConstraint(Optimizable):
+    r"""Used to constrain coils to remain on a surface
+    
+    Computed
+    .. math:
+        J = \sum_{i=1}^{\text{num_coils}} d_i
+
+    where
+    .. math::
+        d_{i} = \int_{\text{curve}_i} \int_{surface} \| \mathbf{r}_i - \mathbf{s} \|_2)^2 ~dl_i ~ds\\
+
+    and :math:`\mathbf{r}_i`, :math:`\mathbf{s}` are points on coil :math:`i`
+    and the surface, respectively. This penalty is zero when all points are on the surface.
+    """
+    def __init__(self, curves, surface, maximum_distance):
+        self.curves = curves
+        self.surface = surface
+        self.maximum_distance = maximum_distance
+
+        self.J_jax = jit(lambda gammac: ws_distance_pure(gammac, self.surface, self.maximum_distance))
+        self.thisgrad0 = jit(lambda gammac: grad(self.J_jax, argnums=0)(gammac))
+        
+        super().__init__(depends_on=curves)    
+
+    def J(self):
+        """
+        This returns the value of the quantity.
+        """
+        res = 0
+        for c in self.curves:
+            gammac = c.gamma()
+            res += self.J_jax(gammac)
+        return res
+
+    @derivative_dec
+    def dJ(self):
+        """
+        This returns the derivative of the quantity with respect to the curve dofs.
+        """
+        dgamma_by_dcoeff_vjp_vecs = [np.zeros_like(c.gamma()) for c in self.curves]
+        gammas = self.surface.gamma().reshape((-1, 3))
+
+        for i, c in enumerate(self.curves):
+            gammac = c.gamma()
+            dgamma_by_dcoeff_vjp_vecs[i] += self.thisgrad0(gammac)
+        res = [self.curves[i].dgamma_by_dcoeff_vjp(dgamma_by_dcoeff_vjp_vecs[i])]
+        return sum(res)
