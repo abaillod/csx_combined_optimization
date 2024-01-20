@@ -78,7 +78,7 @@ inputs['wp_coils'] = dict()
 inputs['wp_coils']['geometry'] = dict()
 inputs['wp_coils']['geometry']['filename'] = None # if None, coils are initialized 
                                                   # according to inputs below
-inputs['wp_coils']['geometry']['ncoil_per_row'] = 0 # total number of wp coils will be 
+inputs['wp_coils']['geometry']['ncoil_per_row'] = 1 # total number of wp coils will be 
                                                     # nfp*size(Z0)*ncoil_per_row
                                                     # if zero, all WP penalty are unused
 inputs['wp_coils']['geometry']['R0'] = 0.7
@@ -99,6 +99,8 @@ inputs['wp_coils']['target']['maxc_threshold'] = 75
 inputs['wp_coils']['target']['maxc_weight'] = Weight(1E-2)
 inputs['wp_coils']['target']['current_threshold'] = 1E+5 
 inputs['wp_coils']['target']['current_weight'] = Weight(1)
+inputs['wp_coils']['target']['winding_surface_weight'] = Weight(1E3)
+
 
 
 # NUMERICS
