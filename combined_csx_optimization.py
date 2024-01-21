@@ -415,7 +415,7 @@ def fun_coils(dofs, info):
         outstr += f"Vessel penalty is {VP:.2E}\n"
         if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
             for i, (l, msc, jcs) in enumerate(zip(wp_lengths, wp_msc, wp_curvatures)):
-                outstr += f"WP_{i:02.0f} length={l.J():.2f},  WP_{i:02.0f} ∫ϰ²/L={msc.J():.2f},  WP_{i:02.0f} ∫max(ϰ-ϰ0,0)^2={jcs.J():.2f}\n" 
+                outstr += f"WP_{i:d} length={l.J():.2f},  WP_{i:d} ∫ϰ²/L={msc.J():.2f},  WP_{d} ∫max(ϰ-ϰ0,0)^2={jcs.J():.2f}\n" 
             outstr += f"\n"
 
         log_print(outstr)
@@ -741,7 +741,7 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         outstr += f"Vessel penalty is {outputs['vessel_penalty'][-1]:.2E}\n"
         if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
             for i, (l, msc, jcs) in enumerate(zip(outputs['WP_length'][-1], outputs['WP_msc'][-1], outputs['WP_max_curvature'][-1])):
-                outstr += f"WP_{i:02.0d} length={l:.5E}, ∫ϰ²/L={msc:.5E}, ∫max(ϰ-ϰ0,0)^2={jcs:.5E}\n" 
+                outstr += f"WP_{i:d} length={l:.5E}, ∫ϰ²/L={msc:.5E}, ∫max(ϰ-ϰ0,0)^2={jcs:.5E}\n" 
         outstr += f"\n"
                 
         # Evaluate Jacobian - this is some magic math copied from Rogerio's code
