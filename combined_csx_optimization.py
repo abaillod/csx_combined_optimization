@@ -347,8 +347,8 @@ Jcoils += il_msc_weight * QuadraticPenalty(il_msc, il_msc_threshold, f='max')
 
 il_vessel_threshold = inputs['cnt_coils']['target']['IL_vessel_threshold'] 
 il_vessel_weight = inputs['cnt_coils']['target']['IL_vessel_weight']
-if il_vessel_threshold>=0 and il_vessel_weight.value!=0:
-    raise ValueError('il_vessel_threshold should be smaller than 0!')
+if il_vessel_threshold<0 and il_vessel_weight.value!=0:
+    raise ValueError('il_vessel_threshold should be greater than 0!')
 vessel = CSX_VacuumVessel()
 vpenalty = il_vessel_weight * VesselConstraint( [il_base_curve], vessel, il_vessel_threshold )
 Jcoils += vpenalty

@@ -68,8 +68,8 @@ inputs['cnt_coils']['target']['IL_maxc_threshold'] = 75
 inputs['cnt_coils']['target']['IL_maxc_weight'] = Weight(1E-2)
 inputs['cnt_coils']['target']['PF_current_threshold'] = 1E9 
 inputs['cnt_coils']['target']['PF_current_weight'] = Weight(0)
-inputs['cnt_coils']['target']['IL_vessel_threshold'] = Weight(0.16)
-inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(1E5)
+inputs['cnt_coils']['target']['IL_vessel_threshold'] = 0.16
+inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(1E4)
 
 
 
@@ -78,7 +78,7 @@ inputs['wp_coils'] = dict()
 inputs['wp_coils']['geometry'] = dict()
 inputs['wp_coils']['geometry']['filename'] = None # if None, coils are initialized 
                                                   # according to inputs below
-inputs['wp_coils']['geometry']['ncoil_per_row'] = 1 # total number of wp coils will be 
+inputs['wp_coils']['geometry']['ncoil_per_row'] = 0 # total number of wp coils will be 
                                                     # nfp*size(Z0)*ncoil_per_row
                                                     # if zero, all WP penalty are unused
 inputs['wp_coils']['geometry']['R0'] = 0.7
