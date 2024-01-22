@@ -152,25 +152,25 @@ def set_default(inputs):
         inputs['cnt_coils']['target']['PF_current_threshold'] = 1E+9     # Maximum PF current value
     if 'PF_current_weight' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target PF_current_weight', out)
-        inputs['cnt_coils']['target']['PF_current_weight'] = Weight(1)   # Weight on PF current penalty
+        inputs['cnt_coils']['target']['PF_current_weight'] = Weight(0)   # Weight on PF current penalty
     if 'IL_maxR_threshold' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_maxR_threshold', out)
         inputs['cnt_coils']['target']['IL_maxR_threshold'] = 0.65
     if 'IL_maxR_weight' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_maxR_weight', out)
-        inputs['cnt_coils']['target']['IL_maxR_weight'] = Weight(1)
+        inputs['cnt_coils']['target']['IL_maxR_weight'] = Weight(0)
     if 'IL_maxZ_threshold' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_maxZ_threshold', out)
         inputs['cnt_coils']['target']['IL_maxZ_threshold'] = 0.75
     if 'IL_maxZ_weight' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_maxZ_weight', out)
-        inputs['cnt_coils']['target']['IL_maxZ_weight'] = Weight(1)
+        inputs['cnt_coils']['target']['IL_maxZ_weight'] = Weight(0)
     if 'IL_vessel_threshold' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_vessel_threshold', out)
         inputs['cnt_coils']['target']['IL_vessel_threshold'] = 0.16
     if 'IL_vessel_weight' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_vessel_weight', out)
-        inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(1)
+        inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(0)
 
         
     ## Windowpane coils related inputs
