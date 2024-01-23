@@ -129,12 +129,15 @@ if comm.rank == 0:
 
 
 # Create log file, define function to append to log file
+repo = git.Repo(simsopt.__path__[0], search_parent_directories=True)
+sha0 = repo.head.object.hexsha
+
 repo = git.Repo(search_parent_directories=True)
-sha = repo.head.object.hexsha
+sha1 = repo.head.object.hexsha
 with open(os.path.join(this_path,'log.txt'), 'w') as f:
     f.write("CSX COMBINED OPTIMIZATION\n")
-    f.write(f"Using simsopt version {simsopt.__version__}\n")
-    f.write(f"Using csx optimization git version {sha}\n")
+    f.write(f"Using simsopt version {sha0}\n")
+    f.write(f"Using csx optimization git version {sha1}\n")
     f.write(f"Date = {date.date(date.now()).isoformat()} at {date.now().strftime('%Hh%M')}\n")
     f.write(set_default_str)
 
