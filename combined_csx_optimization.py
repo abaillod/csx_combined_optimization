@@ -517,7 +517,7 @@ def fun_coils(dofs, info):
         outstr += f"Vessel penalty is {VP:.2E}\n"
         if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
             for i, (l, msc, jcs) in enumerate(zip(wp_lengths, wp_msc, wp_curvatures)):
-                outstr += f"WP_{i:d} length={l.J():.2f},  WP_{i:d} ∫ϰ²/L={msc.J():.2f},  WP_{d} ∫max(ϰ-ϰ0,0)^2={jcs.J():.2f}\n" 
+                outstr += f"WP_{i:d} length={l.J():.2f},  WP_{i:d} ∫ϰ²/L={msc.J():.2f},  WP_{i:d} ∫max(ϰ-ϰ0,0)^2={jcs.J():.2f}\n" 
             outstr += f"\n"
 
         log_print(outstr)
