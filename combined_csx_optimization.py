@@ -849,8 +849,8 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         # Evaluate Jacobian - this is some magic math copied from Rogerio's code
         prob_dJ = prob_jacobian.jac(Jplasma.x)[0] # finite differences
         coils_dJ = Jcoils.dJ() # Analytical
-        outputs['Jplasma'].append(prob_dJ)
-        outputs['Jcoils'].append(coils_dJ)
+        outputs['dJplasma'].append(prob_dJ)
+        outputs['dJcoils'].append(coils_dJ)
     
         assert square_flux.definition == "local" #??
     
