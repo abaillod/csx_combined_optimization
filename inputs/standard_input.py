@@ -66,8 +66,9 @@ inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(1)
 ## Windowpane coils related inputs
 inputs['wp_coils'] = dict()
 inputs['wp_coils']['geometry'] = dict()
-inputs['wp_coils']['geometry']['filename'] = None # if None, coils are initialized 
+inputs['wp_coils']['geometry']['filename'] = 'inputs/coil_inputs/windowpanes/wp_set_01.json' # if None, coils are initialized 
                                                   # according to inputs below
+inputs['wp_coils']['geometry']['n_base_coils'] = 1 # Number of base coils if giving an input file
 inputs['wp_coils']['geometry']['ncoil_per_row'] = 0 # total number of wp coils will be 
                                                     # nfp*size(Z0)*ncoil_per_row
 inputs['wp_coils']['geometry']['R0'] = 0.3  # Initial radial position of WP coils
@@ -90,6 +91,7 @@ inputs['wp_coils']['target']['maxc_weight'] = Weight(0)       # Weight on WP loc
 inputs['wp_coils']['target']['current_threshold'] = 1E+5      # Maximum current in WP coils
 inputs['wp_coils']['target']['current_weight'] = Weight(1E-5) # Weight on WP maximum current penalty
 inputs['wp_coils']['target']['winding_surface_weight'] = Weight(1E3)
+inputs['wp_coils']['dofs']['name'] = ['zc(0)', 'zc(1)', 'zs(1)', 'phic(0)', 'phis(1)', 'phic(1)']
 
 
 # NUMERICS

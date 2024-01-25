@@ -316,12 +316,11 @@ if inputs['wp_coils']['geometry']['filename'] is None:
         wp_base_currents = []
 
 else:
-    bs = load( inputs['wp_coils']['geometry']['filename'] )
+    bs = load( os.path.join(parent_path, inputs['wp_coils']['geometry']['filename']) )
     wp_coils = bs.coils
-    nwp = len(wp_coils)
-    if nwp is None:
-        raise ValueError('Need to provide number of base WP coils')
     nwp_base = inputs['wp_coils']['geometry']['n_base_coils']
+    if nwp_base is None:
+        raise ValueError('Need to provide number of base WP coils')
     wp_base_coils = bs.coils[:nwp_base]
     wp_base_curves = [c.curve for c in wp_base_coils]
     wp_base_currents = [c.current for c in wp_base_coils]
