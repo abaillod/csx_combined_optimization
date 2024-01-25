@@ -203,6 +203,31 @@ vmec.indata.mpol = inputs['vmec']['internal_mpol']
 vmec.indata.ntor = inputs['vmec']['internal_ntor'] 
 surf = vmec.boundary
 
+
+max_boundary_mpol = inputs['vmec']['max_boundary_mpol']
+if max_boundary_mpol is None:
+    max_boundary_mpol = inputs['vmec']['internal_mpol'] 
+    
+max_boundary_ntor = inputs['vmec']['max_boundary_ntor']
+if max_boundary_ntor is None:
+    max_boundary_ntor = inputs['vmec']['internal_ntor'] 
+    
+for mm in range(max_boundary_mpol+1, surf.mpol+1):
+    for nn in range(-surf.ntor, surf.ntor+1):
+        surf.set(f'rc({mm},{nn})', 0)
+        surf.set(f'zs({mm},{nn})', 0)
+for nn in range(max_boundary_ntor+1, surf.ntor+1):
+    for mm in range(0, surf.mpol+1):
+        for p_or_m in [-1,1]:
+            if mm==0 and p_or_m==-1:
+                continue
+            surf.set(f'rc({mm},{p_or_m*nn})', 0)
+
+            if mm==0 and nn==0:
+                continue
+            surf.set(f'zs({mm},{p_or_m*nn})', 0)
+            
+        
 # Save initial vmec
 vmec.write_input(os.path.join(this_path, f'input.initial'))
 
@@ -437,7 +462,7 @@ il_length = CurveLength( il_base_curve )
 il_length_target = inputs['cnt_coils']['target']['IL_length']
 il_length_penalty_type = inputs['cnt_coils']['target']['IL_length_constraint_type']
 il_length_weight = inputs['cnt_coils']['target']['IL_length_weight'] 
-Jcoils =add_target( Jcoils, QuadraticPenalty( il_length, il_length_target, il_length_penalty_type ), il_length_weight)
+Jcoils = add_target(Jcoils, QuadraticPenalty( il_length, il_length_target, il_length_penalty_type ), il_length_weight)
 
 il_curvature_threshold = inputs['cnt_coils']['target']['IL_maxc_threshold']
 il_curvature_weight = inputs['cnt_coils']['target']['IL_maxc_weight']
@@ -474,7 +499,7 @@ if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
     wp_length_threshold = inputs['wp_coils']['target']['length']
     wp_length_penalty_type = inputs['wp_coils']['target']['length_constraint_type']
     wp_length_weight = inputs['wp_coils']['target']['length_weight']
-    Jcoils = add_target(
+    Jcoils = add_target( 
         Jcoils, 
         sum([QuadraticPenalty( wpl, wp_length_threshold, wp_length_penalty_type) for wpl in wp_lengths]),
         wp_length_weight

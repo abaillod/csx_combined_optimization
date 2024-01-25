@@ -213,14 +213,19 @@ def signed_distance_from_surface(xyz, surface):
 
 
 
-def ws_distance_pure(gammac, v, minimum_distance):
+def ws_distance_pure(gammac, lc, surface, minimum_distance):
     """
     This function is used in a Python+Jax implementation of the curve-surface distance
     formula.
     """
-    dists = signed_distance_from_surface( gammac, v )
-    out = jnp.mean( jnp.maximum(minimum_distance-dists, 0)**2)
-    return out
+    ns = surface.normal().reshape((-1, 3))
+    gammas = surface.gamma().reshape((-1,3))
+    
+    dists = jnp.sqrt(jnp.sum(
+        (gammac[:, None, :] - gammas[None, :, :])**2, axis=2))
+    integralweight = jnp.linalg.norm(lc, axis=1)[:, None] \
+        * jnp.linalg.norm(ns, axis=1)[None, :]
+    return jnp.mean(integralweight * jnp.maximum(minimum_distance-dists, 0)**2)
 
 class VesselConstraint(Optimizable):
     r"""Used to constrain coils to remain on a surface
@@ -240,9 +245,12 @@ class VesselConstraint(Optimizable):
         self.curves = curves
         self.surface = surface
         self.maximum_distance = maximum_distance
+        #gammas = self.surface.gamma().reshape((-1,3))
+        #ns = self.surface.normal().reshape((-1, 3))
 
-        self.J_jax = jit(lambda gammac: ws_distance_pure(gammac, self.surface, self.maximum_distance))
-        self.thisgrad0 = jit(lambda gammac: grad(self.J_jax, argnums=0)(gammac))
+        self.J_jax = jit(lambda gammac, lc: ws_distance_pure(gammac, lc, self.surface, self.maximum_distance))
+        self.thisgrad0 = jit(lambda gammac, lc: grad(self.J_jax, argnums=0)(gammac, lc))
+        self.thisgrad1 = jit(lambda gammac, lc: grad(self.J_jax, argnums=1)(gammac, lc))
         
         super().__init__(depends_on=curves)    
 
@@ -253,7 +261,8 @@ class VesselConstraint(Optimizable):
         res = 0
         for c in self.curves:
             gammac = c.gamma()
-            res += self.J_jax(gammac)
+            lc = c.gammadash()
+            res += self.J_jax(gammac, lc)
         return res
 
     @derivative_dec
@@ -262,10 +271,14 @@ class VesselConstraint(Optimizable):
         This returns the derivative of the quantity with respect to the curve dofs.
         """
         dgamma_by_dcoeff_vjp_vecs = [np.zeros_like(c.gamma()) for c in self.curves]
-        gammas = self.surface.gamma().reshape((-1, 3))
+        dgammadash_by_dcoeff_vjp_vecs = [np.zeros_like(c.gammadash()) for c in self.curves]
 
         for i, c in enumerate(self.curves):
             gammac = c.gamma()
-            dgamma_by_dcoeff_vjp_vecs[i] += self.thisgrad0(gammac)
-        res = [self.curves[i].dgamma_by_dcoeff_vjp(dgamma_by_dcoeff_vjp_vecs[i])]
+            lc = c.gammadash()
+            dgamma_by_dcoeff_vjp_vecs[i] += self.thisgrad0(gammac, lc)
+            dgammadash_by_dcoeff_vjp_vecs[i] += self.thisgrad1(gammac, lc)
+        res = [self.curves[i].dgamma_by_dcoeff_vjp(dgamma_by_dcoeff_vjp_vecs[i]) + \
+               self.curves[i].dgammadash_by_dcoeff_vjp(dgammadash_by_dcoeff_vjp_vecs[i]) for i in range(len(self.curves))
+              ]
         return sum(res)

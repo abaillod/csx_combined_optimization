@@ -20,6 +20,9 @@ inputs['vmec']['ntheta'] = 34                    # VMEC poloidal resolution in r
 inputs['vmec']['internal_mpol'] = 2 
 inputs['vmec']['internal_ntor'] = 2
 
+inputs['vmec']['max_boundary_mpol'] = 1
+inputs['vmec']['max_boundary_ntor'] = 2
+
 inputs['vmec']['dofs'] = dict() 
 inputs['vmec']['dofs']['mpol'] = 2 # VMEC boundary dofs with  m<=mpol will be unfixed
 inputs['vmec']['dofs']['ntor'] = 2 # VMEC boundary dofs with |n|<= ntor will be unfixed
@@ -65,7 +68,7 @@ inputs['wp_coils'] = dict()
 inputs['wp_coils']['geometry'] = dict()
 inputs['wp_coils']['geometry']['filename'] = None # if None, coils are initialized 
                                                   # according to inputs below
-inputs['wp_coils']['geometry']['ncoil_per_row'] = 2 # total number of wp coils will be 
+inputs['wp_coils']['geometry']['ncoil_per_row'] = 0 # total number of wp coils will be 
                                                     # nfp*size(Z0)*ncoil_per_row
 inputs['wp_coils']['geometry']['R0'] = 0.3  # Initial radial position of WP coils
 inputs['wp_coils']['geometry']['R1'] = 0.05 # Initial radius of WP coils

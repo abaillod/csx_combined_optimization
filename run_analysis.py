@@ -35,11 +35,11 @@ with open(os.path.join(this_path, 'outputs.pckl'),'rb') as f:
 fig, axs = plt.subplots(2, 4, figsize=(16,9))
 axs[0,0].semilogy(np.array(out['J']) / out['J'][0], label=r'$J$')
 try:
-    axs[0,0].semilogy(np.array(out['Jplasma']) / out['Jplasma'][0], label=r'$J_\text{plasma}$')
+    axs[0,0].semilogy(np.array(out['Jplasma']) / out['Jplasma'][0], label=r'$J_{plasma}$')
 except ValueError as e:
     print('Jplasma is corrupted')
 try:
-    axs[0,0].semilogy(np.array(out['Jcoils']) / out['Jcoils'][0], label=r'$J_\text{coils}$')
+    axs[0,0].semilogy(np.array(out['Jcoils']) / out['Jcoils'][0], label=r'$J_{coils}$')
 except ValueError as e:
     print('Jcoils is corrupted')
 axs[0,0].set_xlabel('Fct evaluation')
