@@ -212,29 +212,22 @@ max_boundary_ntor = inputs['vmec']['max_boundary_ntor']
 if max_boundary_ntor is None:
     max_boundary_ntor = inputs['vmec']['internal_ntor'] 
     
-for mm in range(max_boundary_mpol+1, vmec.indata.mpol+1):
-    for nn in range(-vmec.indata.ntor, vmec.indata.ntor+1):
-        surf.set(f'rc({mm},{nn}', 0)
-        surf.set(f'rs({mm},{nn}', 0)
-        surf.set(f'zc({mm},{nn}', 0)
-        surf.set(f'zs({mm},{nn}', 0)
-for nn in range(max_boundary_ntor+1, vmec.indata.ntor+1):
-    for mm in range(0, vmec.indata.mpol+1):
+for mm in range(max_boundary_mpol+1, surf.mpol+1):
+    for nn in range(-surf.ntor, surf.ntor+1):
+        surf.set(f'rc({mm},{nn})', 0)
+        surf.set(f'zs({mm},{nn})', 0)
+for nn in range(max_boundary_ntor+1, surf.ntor+1):
+    for mm in range(0, surf.mpol+1):
         for p_or_m in [-1,1]:
             if mm==0 and p_or_m==-1:
                 continue
-            surf.set(f'rc({mm},{p_or_m*nn}', 0)
-            surf.set(f'zc({mm},{p_or_m*nn}', 0)
+            surf.set(f'rc({mm},{p_or_m*nn})', 0)
 
             if mm==0 and nn==0:
                 continue
-            surf.set(f'rs({mm},{p_or_m*nn}', 0)
-            surf.set(f'zs({mm},{p_or_m*nn}', 0)
+            surf.set(f'zs({mm},{p_or_m*nn})', 0)
+            
         
-    
-
-
-
 # Save initial vmec
 vmec.write_input(os.path.join(this_path, f'input.initial'))
 
@@ -457,36 +450,37 @@ square_flux = SquaredFlux(surf, bs, definition="local")
 Jcoils = square_flux
 
 
-def add_target(J, w):
+def add_target(Jcoils, J, w):
     # This is a small wrapper to avoid adding some 0*J() to the target function.
     # I don't know if it might cause numerical issues.
     if w.value>0:
         Jcoils += w * J
+    return Jcoils
 
 # IL-coils penalties
 il_length = CurveLength( il_base_curve )
 il_length_target = inputs['cnt_coils']['target']['IL_length']
 il_length_penalty_type = inputs['cnt_coils']['target']['IL_length_constraint_type']
 il_length_weight = inputs['cnt_coils']['target']['IL_length_weight'] 
-add_target(QuadraticPenalty( il_length, il_length_target, il_length_penalty_type ), il_length_weight)
+Jcoils = add_target(Jcoils, QuadraticPenalty( il_length, il_length_target, il_length_penalty_type ), il_length_weight)
 
 il_curvature_threshold = inputs['cnt_coils']['target']['IL_maxc_threshold']
 il_curvature_weight = inputs['cnt_coils']['target']['IL_maxc_weight']
 il_curvature = LpCurveCurvature(il_base_curve, 2, il_curvature_threshold)
-add_target( il_curvature, il_curvature_weight )
+Jcoils = add_target( Jcoils, il_curvature, il_curvature_weight )
 
 il_msc = MeanSquaredCurvature( il_base_curve )
 il_msc_threshold = inputs['cnt_coils']['target']['IL_msc_threshold']
 il_msc_weight = inputs['cnt_coils']['target']['IL_msc_weight']
-add_target( QuadraticPenalty(il_msc, il_msc_threshold, f='max'), il_msc_weight )
+Jcoils = add_target( Jcoils, QuadraticPenalty(il_msc, il_msc_threshold, f='max'), il_msc_weight )
 
 il_curveR_threshold = inputs['cnt_coils']['target']['IL_maxR_threshold'] 
 il_curveR_weight = inputs['cnt_coils']['target']['IL_maxR_weight']
-add_target( LpCurveR( il_base_curve, 2, il_curveR_threshold ), il_curveR_weight )
+Jcoils = add_target( Jcoils, LpCurveR( il_base_curve, 2, il_curveR_threshold ), il_curveR_weight )
 
 il_curveZ_threshold = inputs['cnt_coils']['target']['IL_maxZ_threshold'] 
 il_curveZ_weight = inputs['cnt_coils']['target']['IL_maxZ_weight']
-add_target( LpCurveZ( il_base_curve, 2, il_curveZ_threshold ), il_curveZ_weight )
+Jcoils = add_target( Jcoils, LpCurveZ( il_base_curve, 2, il_curveZ_threshold ), il_curveZ_weight )
 
 il_vessel_threshold = inputs['cnt_coils']['target']['IL_vessel_threshold'] 
 il_vessel_weight = inputs['cnt_coils']['target']['IL_vessel_weight']
@@ -494,10 +488,10 @@ if il_vessel_threshold<0 and il_vessel_weight.value!=0:
     raise ValueError('il_vessel_threshold should be greater than 0!')
 vessel = CSX_VacuumVessel()
 vpenalty = VesselConstraint( [il_base_curve], vessel, il_vessel_threshold )
-add_target( vpenalty, il_vessel_weight )
+Jcoils = add_target( Jcoils, vpenalty, il_vessel_weight )
 
 il_arclength_weight = inputs['cnt_coils']['target']['arclength_weight'] 
-add_target( ArclengthVariation( il_base_curve ), il_arclength_weight )
+Jcoils = add_target( Jcoils, ArclengthVariation( il_base_curve ), il_arclength_weight )
 
 # WP penalties
 if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
@@ -505,7 +499,8 @@ if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
     wp_length_threshold = inputs['wp_coils']['target']['length']
     wp_length_penalty_type = inputs['wp_coils']['target']['length_constraint_type']
     wp_length_weight = inputs['wp_coils']['target']['length_weight']
-    add_target( 
+    Jcoils = add_target( 
+        Jcoils, 
         sum([QuadraticPenalty( wpl, wp_length_threshold, wp_length_penalty_type) for wpl in wp_lengths]),
         wp_length_weight
     )
@@ -513,22 +508,22 @@ if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
     wp_curvature_threshold = inputs['wp_coils']['target']['maxc_threshold']
     wp_curvature_weight = inputs['wp_coils']['target']['maxc_weight']
     wp_curvatures = [LpCurveCurvature(c, 2, wp_curvature_threshold) for c in wp_base_curves]
-    add_target( sum(wp_curvatures), wp_curvature_weight )
+    Jcoils = add_target( Jcoils, sum(wp_curvatures), wp_curvature_weight )
 
     wp_msc = [MeanSquaredCurvature(c) for c in wp_base_curves]
     wp_msc_threshold = inputs['wp_coils']['target']['msc_threshold']
     wp_msc_weight = inputs['wp_coils']['target']['msc_weight']
-    add_target( sum([QuadraticPenalty(msc, wp_msc_threshold, f='max') for msc in wp_msc]), wp_msc_weight )
+    Jcoils = add_target( Jcoils, sum([QuadraticPenalty(msc, wp_msc_threshold, f='max') for msc in wp_msc]), wp_msc_weight )
     
     winding_surf = CSX_VacuumVessel(scale = 0.8)
     wp_sw_weight = inputs['wp_coils']['target']['winding_surface_weight']
-    add_target( WindingSurface( wp_base_curves, winding_surf, 0.0 ), wp_sw_weight ) 
+    Jcoils = add_target( Jcoils, WindingSurface( wp_base_curves, winding_surf, 0.0 ), wp_sw_weight ) 
 
 Jccdist = CurveCurveDistance(full_curves, inputs['CC_THRESHOLD'], num_basecurves=len(full_curves))
-add_target( inputs['CC_WEIGHT'], Jccdist ) 
+Jcoils = add_target( Jcoils, Jccdist, inputs['CC_WEIGHT'] ) 
 
 Jcsdist = CurveSurfaceDistance(base_curves, surf, inputs['CS_THRESHOLD'])
-add_target( inputs['CS_WEIGHT'], Jcsdist ) 
+Jcoils = add_target( Jcoils, Jcsdist, inputs['CS_WEIGHT'] ) 
 
 def fun_coils(dofs, info):
     """Objective function for the stage II optimization
@@ -734,11 +729,11 @@ J_volume =  inputs['vmec']['target']['volume_weight'] * QuadraticPenalty( volume
 
 Jplasma = J_qs
 # Only add targets with non-zero weight.
-if inputs['vmec']['target']['iota_weight']>0:
+if inputs['vmec']['target']['iota_weight'].value>0:
     Jplasma += J_iota
-if inputs['vmec']['target']['aspect_ratio_weight']>0:
+if inputs['vmec']['target']['aspect_ratio_weight'].value>0:
     Jplasma += J_aspect
-if inputs['vmec']['target']['volume_weight']>0:
+if inputs['vmec']['target']['volume_weight'].value>0:
     Jplasma += J_volume
 
 
