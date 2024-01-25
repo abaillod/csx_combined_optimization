@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from simsopt.field import SurfaceClassifier, \
     particles_to_vtk, compute_fieldlines, LevelsetStoppingCriterion, plot_poincare_data
 from simsopt.geo import CurveLength
+import pickle
 
 
 # Read command line arguments
@@ -24,6 +25,72 @@ figure_path = os.path.join( this_path, 'figure')
 os.makedirs(figure_path, exist_ok=True)
 
 os.chdir(this_path)
+
+
+
+with open(os.path.join(this_path, 'outputs.pckl'),'rb') as f:
+    out = pickle.load(f)
+
+# Plot target function values
+fig, axs = plt.subplots(2, 4, figsize=(16,9))
+axs[0,0].semilogy(np.array(out['J']) / out['J'][0], label=r'$J$')
+try:
+    axs[0,0].semilogy(np.array(out['Jplasma']) / out['Jplasma'][0], label=r'$J_\text{plasma}$')
+except ValueError as e:
+    print('Jplasma is corrupted')
+try:
+    axs[0,0].semilogy(np.array(out['Jcoils']) / out['Jcoils'][0], label=r'$J_\text{coils}$')
+except ValueError as e:
+    print('Jcoils is corrupted')
+axs[0,0].set_xlabel('Fct evaluation')
+axs[0,0].set_ylabel('Normalized target')
+axs[0,0].legend()
+
+axs[0,1].plot(out['iota_axis'], label=r'$\iota_{axis}$')
+axs[0,1].plot(out['iota_edge'], label=r'$\iota_{edge}$')
+axs[0,1].plot(out['mean_iota'], label=r'$\iota_{mean}$')
+axs[0,1].set_xlabel('Fct evaluation')
+axs[0,1].set_ylabel('Rotational transform')
+axs[0,1].legend()
+
+axs[0,2].plot(out['aspect'])
+axs[0,2].set_xlabel('Fct evaluation')
+axs[0,2].set_ylabel('Aspect ratio')
+
+axs[1,0].semilogy(out['QuadFlux'])
+axs[1,0].set_xlabel('Fct evaluation')
+axs[1,0].set_ylabel('Quadratic flux')
+
+axs[1,1].plot(out['min_CS'], label='Coil-Surface')
+axs[1,1].plot(out['min_CC'], label='Coil-Coil')
+axs[1,1].legend()
+axs[1,1].set_xlabel('Fct evaluation')
+axs[1,1].set_ylabel('Minimum distance')
+
+axs[1,2].plot(out['IL_length'], label='IL length')
+axs[1,2].plot(out['IL_msc'], label='IL mean square curvature')
+axs[1,2].plot(out['IL_max_curvature'], label='IL max curvature')
+axs[1,2].legend()
+axs[1,2].set_xlabel('Fct evaluation')
+axs[1,2].set_ylabel('IL coil metric')
+
+axs[1,3].semilogy(out['vmec']['fsqr'], label='fsqr')
+axs[1,3].semilogy(out['vmec']['fsqz'], label='fsqz')
+axs[1,3].semilogy(out['vmec']['fsql'], label='fsql')
+axs[1,3].legend()
+axs[1,2].set_xlabel('Fct evaluation')
+axs[1,2].set_ylabel('VMEC convergence metric')
+
+plt.savefig(os.path.join(figure_path, 'metric_evolution'))
+plt.tight_layout()
+if args.show:
+    plt.show()
+
+
+
+
+
+
 
 v = Vmec('input.final')
 bs = load(os.path.join(this_path, 'coils/bs_output.json'))
@@ -64,7 +131,6 @@ with open( os.path.join(this_path, 'figures_of_merit.txt'), 'w' ) as file:
           file.write(f'IL coil current = {il_current:.2E}\n')
           file.write(f'PF coil current = {pf_current:.2E}\n')
           file.write(f'IL coil length = {il_length:.2E}\n')
-
 
 # Plot quaissymmetry
 plt.figure()
@@ -144,4 +210,6 @@ def trace_fieldlines(bfield,label):
     return fieldlines_phi_hits
 
 hits = trace_fieldlines(bs, 'vmec')
+
+
 
