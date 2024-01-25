@@ -704,11 +704,11 @@ J_volume =  inputs['vmec']['target']['volume_weight'] * QuadraticPenalty( volume
 
 Jplasma = J_qs
 # Only add targets with non-zero weight.
-if inputs['vmec']['target']['iota_weight']>0:
+if inputs['vmec']['target']['iota_weight'].value>0:
     Jplasma += J_iota
-if inputs['vmec']['target']['aspect_ratio_weight']>0:
+if inputs['vmec']['target']['aspect_ratio_weight'].value>0:
     Jplasma += J_aspect
-if inputs['vmec']['target']['volume_weight']>0:
+if inputs['vmec']['target']['volume_weight'].value>0:
     Jplasma += J_volume
 
 
