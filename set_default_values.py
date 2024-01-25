@@ -178,7 +178,7 @@ def set_default(inputs):
         inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(0)
     if 'arclength_weight' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for arc length weight', out)
-        inputs['cnt_coils']['target']['arclength_weight'] = Weight(1)
+        inputs['cnt_coils']['target']['arclength_weight'] = Weight(0)
 
         
     ## Windowpane coils related inputs
