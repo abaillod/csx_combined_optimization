@@ -47,6 +47,14 @@ def set_default(inputs):
         out = logprint('Setting default value for vmec internal_ntor', out)
         inputs['vmec']['internal_ntor'] = 8
 
+    
+    if 'max_boundary_mpol' not in inputs['vmec'].keys():
+        out = logprint('Setting default value for vmec max_boundary_mpol', out)
+        inputs['vmec']['max_boundary_mpol'] = None
+    if 'max_boundary_ntor' not in inputs['vmec'].keys():
+        out = logprint('Setting default value for vmec max_boundary_ntor', out)
+        inputs['vmec']['max_boundary_ntor'] = None
+
  
     if 'dofs' not in inputs['vmec'].keys():
         inputs['vmec']['dofs'] = dict()
