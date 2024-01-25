@@ -95,9 +95,6 @@ def set_default(inputs):
     if 'volume_constraint_type' not in inputs['vmec']['target'].keys():
         out = logprint('Setting default value for vmec volume_constraint_type', out)
         inputs['vmec']['target']['volume_constraint_type'] = 'min'
-    if 'arclength_weight' not in inputs['cnt_coils']['target'].keys():
-        out = logprint('Setting default value for arc length weight', out)
-        inputs['cnt_coils']['target']['arclength_weight'] = Weight(1)
  
 
     # COILS
@@ -171,6 +168,9 @@ def set_default(inputs):
     if 'IL_vessel_weight' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_vessel_weight', out)
         inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(0)
+    if 'arclength_weight' not in inputs['cnt_coils']['target'].keys():
+        out = logprint('Setting default value for arc length weight', out)
+        inputs['cnt_coils']['target']['arclength_weight'] = Weight(1)
 
         
     ## Windowpane coils related inputs
@@ -181,7 +181,9 @@ def set_default(inputs):
     if 'filename' not in inputs['wp_coils']['geometry'].keys():
         out = logprint('Setting default value for wp_coils geometry filename', out)
         inputs['wp_coils']['geometry']['filename'] = None # if None, coils are initialized 
-                                                          # according to inputs below
+                                                         # according to inputs below
+    if 'n_base_coils' not in inputs['wp_coils']['geometry'].keys():
+        inputs['wp_coils']['geometry']['n_base_coils'] = None
     if 'ncoil_per_row' not in inputs['wp_coils']['geometry'].keys():
         out = logprint('Setting default value for wp_coils geometry ncoils_per_row', out)
         inputs['wp_coils']['geometry']['ncoil_per_row'] = 2 # total number of wp coils will be 
@@ -204,6 +206,14 @@ def set_default(inputs):
     if 'planar' not in inputs['wp_coils']['dofs'].keys():
         out = logprint('Setting default value for wp_coils dofs planar', out)
         inputs['wp_coils']['dofs']['planar'] = True # Enforce coils to remain planar if True (fix all yn)
+    if 'name' not in inputs['wp_coils']['dofs'].keys():
+        inputs['wp_coils']['dofs']['name'] = []
+        for xyz in ['x', 'y', 'z']:
+            inputs['wp_coils']['dofs']['name'].append(f'{xyz}c(0)')
+            for cs in ['c','s']:
+                for o in range(1,inputs['wp_coils']['dofs']['order']+1):
+                    inputs['wp_coils']['dofs']['name'].append(f'{xyz}{cs}({o})')
+                    
         
     if 'target' not in inputs['wp_coils'].keys():
         inputs['wp_coils']['target'] = dict()
