@@ -1006,10 +1006,13 @@ with MPIFiniteDifference(Jplasma.J, mpi, diff_method=diff_method, abs_step=finit
             log_print(f"Final function value: {res.fun}\n")
             log_print(f"Final gradient: {res.jac}\n" )
             log_print(f"\n")
-            log_print(f"Aspect ratio after optimization: {vmec.aspect()}\n")
-            log_print(f"Mean iota after optimization: {vmec.mean_iota()}\n")
-            log_print(f"Quasisymmetry objective after optimization: {qs.total()}\n")
-            log_print(f"Magnetic well after optimization: {vmec.vacuum_well()}\n")
+            try:
+                log_print(f"Aspect ratio after optimization: {vmec.aspect()}\n")
+                log_print(f"Mean iota after optimization: {vmec.mean_iota()}\n")
+                log_print(f"Quasisymmetry objective after optimization: {qs.total()}\n")
+                log_print(f"Magnetic well after optimization: {vmec.vacuum_well()}\n")
+            except BaseException as e:
+                log_print(f"Could not print final aspect ratio, mean iota, QS, and vacuum well")
             log_print(f"Squared flux after optimization: {square_flux.J()}\n")
             
             for j, coil in enumerate(base_coils):
