@@ -143,7 +143,7 @@ def normal( tarr, zarr, params ):
 
 
 class CSX_VacuumVessel:
-    def __init__(self, ntheta=64, nz = 32, scale=1):
+    def __init__(self, ntheta=128, nz = 152, scale=1):
         f = 0.0254 # inch to meters
         epsilon = 0.1
         self.scale = scale
