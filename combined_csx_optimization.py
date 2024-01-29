@@ -944,28 +944,29 @@ if comm.rank == 0:
         log_print(f"{name}={dof:.2e}\n")
     log_print("\n")
 
-np.random.seed(1)
-h = np.random.uniform(size=dofs.shape)
-h1 = h[:-ndof_vmec]
-h2 = h[-ndof_vmec:]
 myeps = [1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7]
-def taylor_test(f, x, h):
-    out = np.zeros((len(myeps),))
-    f0, df0 = f(x, info={'Nfeval':0, 'grad':True})
-    df0 = df0.reshape(h.shape)
-    for ii, eps in enumerate(myeps):
-        f1, _ = f(x+eps*h, info={'Nfeval':0, 'grad':False})
-        f2, _ = f(x-eps*h, info={'Nfeval':0, 'grad':False})
-        out[ii] = (f1-f2) / (2*eps) - sum(df0*h)
-    return out
-
-def fun_plasma(x0, prob_jacobian, info):
-    info['Nfeval'] += 1
-    Jplasma.x = x0
-    if info['grad']:
-        return Jplasma.J(), prob_jacobian.jac(x0)
-    else:
-        return Jplasma.J(), 0
+if inputs['numerics']['taylor_test']:
+    np.random.seed(1)
+    h = np.random.uniform(size=dofs.shape)
+    h1 = h[:-ndof_vmec]
+    h2 = h[-ndof_vmec:]
+    def taylor_test(f, x, h):
+        out = np.zeros((len(myeps),))
+        f0, df0 = f(x, info={'Nfeval':0, 'grad':True})
+        df0 = df0.reshape(h.shape)
+        for ii, eps in enumerate(myeps):
+            f1, _ = f(x+eps*h, info={'Nfeval':0, 'grad':False})
+            f2, _ = f(x-eps*h, info={'Nfeval':0, 'grad':False})
+            out[ii] = (f1-f2) / (2*eps) - sum(df0*h)
+        return out
+    
+    def fun_plasma(x0, prob_jacobian, info):
+        info['Nfeval'] += 1
+        Jplasma.x = x0
+        if info['grad']:
+            return Jplasma.J(), prob_jacobian.jac(x0)
+        else:
+            return Jplasma.J(), 0
     
 # Prepare output
 outputs['result'] = None
