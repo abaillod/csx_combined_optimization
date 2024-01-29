@@ -272,15 +272,13 @@ del(cnt_initial_coils)
 del(bs)
 
 # Extract core curves. Rename each coil for easier reading of the dofs name.
-il_base_curve = il_coils[0].curve
-while hasattr(il_base_curve, 'curve'):
-    il_base_curve = il_base_curve.curve
-il_base_curve.name = 'IL_base_curve'
+il_curve = il_coils[0].curve
 
 il_base_current = il_coils[0].current
 il_base_current.name = 'IL_base_current'
 
-pf_base_curve = pf_coils[0].curve
+pf_curve = pf_coils[0].curve
+pf_base_curve = pf_curve
 while hasattr(pf_base_curve, 'curve'):
     pf_base_curve = pf_base_curve.curve
 pf_base_curve.name = 'PF_base_curve'
@@ -457,7 +455,7 @@ def add_target(Jcoils, J, w):
     return Jcoils
 
 # IL-coils penalties
-il_length = CurveLength( il_base_curve )
+il_length = CurveLength( il_curve )
 il_length_target = inputs['cnt_coils']['target']['IL_length']
 il_length_penalty_type = inputs['cnt_coils']['target']['IL_length_constraint_type']
 il_length_weight = inputs['cnt_coils']['target']['IL_length_weight'] 
@@ -465,32 +463,32 @@ Jcoils = add_target(Jcoils, QuadraticPenalty( il_length, il_length_target, il_le
 
 il_curvature_threshold = inputs['cnt_coils']['target']['IL_maxc_threshold']
 il_curvature_weight = inputs['cnt_coils']['target']['IL_maxc_weight']
-il_curvature = LpCurveCurvature(il_base_curve, 2, il_curvature_threshold)
+il_curvature = LpCurveCurvature(il_curve, 2, il_curvature_threshold)
 Jcoils = add_target( Jcoils, il_curvature, il_curvature_weight )
 
-il_msc = MeanSquaredCurvature( il_base_curve )
+il_msc = MeanSquaredCurvature( il_curve )
 il_msc_threshold = inputs['cnt_coils']['target']['IL_msc_threshold']
 il_msc_weight = inputs['cnt_coils']['target']['IL_msc_weight']
 Jcoils = add_target( Jcoils, QuadraticPenalty(il_msc, il_msc_threshold, f='max'), il_msc_weight )
 
 il_curveR_threshold = inputs['cnt_coils']['target']['IL_maxR_threshold'] 
 il_curveR_weight = inputs['cnt_coils']['target']['IL_maxR_weight']
-Jcoils = add_target( Jcoils, LpCurveR( il_base_curve, 2, il_curveR_threshold ), il_curveR_weight )
+Jcoils = add_target( Jcoils, LpCurveR( il_curve, 2, il_curveR_threshold ), il_curveR_weight )
 
 il_curveZ_threshold = inputs['cnt_coils']['target']['IL_maxZ_threshold'] 
 il_curveZ_weight = inputs['cnt_coils']['target']['IL_maxZ_weight']
-Jcoils = add_target( Jcoils, LpCurveZ( il_base_curve, 2, il_curveZ_threshold ), il_curveZ_weight )
+Jcoils = add_target( Jcoils, LpCurveZ( il_curve, 2, il_curveZ_threshold ), il_curveZ_weight )
 
 il_vessel_threshold = inputs['cnt_coils']['target']['IL_vessel_threshold'] 
 il_vessel_weight = inputs['cnt_coils']['target']['IL_vessel_weight']
 if il_vessel_threshold<0 and il_vessel_weight.value!=0:
     raise ValueError('il_vessel_threshold should be greater than 0!')
 vessel = CSX_VacuumVessel()
-vpenalty = VesselConstraint( [il_base_curve], vessel, il_vessel_threshold )
+vpenalty = VesselConstraint( [il_curve], vessel, il_vessel_threshold )
 Jcoils = add_target( Jcoils, vpenalty, il_vessel_weight )
 
 il_arclength_weight = inputs['cnt_coils']['target']['arclength_weight'] 
-Jcoils = add_target( Jcoils, ArclengthVariation( il_base_curve ), il_arclength_weight )
+Jcoils = add_target( Jcoils, ArclengthVariation( il_curve ), il_arclength_weight )
 
 # WP penalties
 if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
@@ -567,6 +565,11 @@ def fun_coils(dofs, info):
 Jcoils.fix_all()
 
 # Unfix IL geometry
+il_base_curve = il_curve
+while hasattr(il_base_curve, 'curve'):
+    il_base_curve = il_base_curve.curve
+il_base_curve.name = 'IL_base_curve'
+
 if inputs['cnt_coils']['dofs']['IL_geometry_free']:
     for ii in range(inputs['cnt_coils']['dofs']['IL_order']+1):
         il_base_curve.unfix(f'xc({ii})')
