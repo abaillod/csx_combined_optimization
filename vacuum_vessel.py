@@ -135,10 +135,7 @@ def normal( tarr, zarr, params ):
             dz = dz.at[counter,0].set( drdz[iz] * np.sin( tarr[it] ) )
             dz = dz.at[counter,2].set( drdz[iz] * np.cos( tarr[it] ) )
     
-    normal = np.cross( dtheta, dz )
-    norm   = np.linalg.norm( normal, axis=1 )    
-    
-    return np.einsum('ij,i->ij', normal, 1./norm)
+    return np.cross( dtheta, dz )
     
 
 
@@ -175,14 +172,16 @@ class CSX_VacuumVessel:
 
         # Only evaluate it once
         self.gamma_stack = gamma( self.quadpoints_theta, self.quadpoints_z, self.params ) * f
-        self.unit_normal_stack = normal( self.quadpoints_theta, self.quadpoints_z, self.params )
+        self.normal_stack = normal( self.quadpoints_theta, self.quadpoints_z, self.params )
+        self.unit_normal_stack = np.einsum( 'ij,i->ij', self.normal_stack, 1./np.linalg.norm(self.normal_stack, axis=1) )
 
 
     def gamma(self):
         return self.gamma_stack.reshape((self.nz,self.nt,3)) * self.scale
 
     def normal(self):
-        return self.unit_normal_stack
+        return self.normal_stack
+
     def unitnormal(self):
         return self.unit_normal_stack
 
