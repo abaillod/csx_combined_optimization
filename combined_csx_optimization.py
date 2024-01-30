@@ -519,7 +519,7 @@ if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
 Jccdist = CurveCurveDistance(full_curves, inputs['CC_THRESHOLD'], num_basecurves=len(full_curves))
 Jcoils = add_target( Jcoils, Jccdist, inputs['CC_WEIGHT'] ) 
 
-Jcsdist = CurveSurfaceDistance(base_curves, surf, inputs['CS_THRESHOLD'])
+Jcsdist = CurveSurfaceDistance([il_curve], surf, inputs['CS_THRESHOLD'])
 Jcoils = add_target( Jcoils, Jcsdist, inputs['CS_WEIGHT'] ) 
 
 def fun_coils(dofs, info):
