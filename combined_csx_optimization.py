@@ -1000,7 +1000,7 @@ with MPIFiniteDifference(Jplasma.J, mpi, diff_method=diff_method, abs_step=finit
             # -------------------------------------------------------------------------------------
             outputs['result'] = minimize(
                     fun, dofs, args=(prob_jacobian, {'Nfeval': 0}), jac=True, method='BFGS', 
-                    options={'maxiter': inputs['numerics']['MAXITER_single_stage']}, tol=1e-15
+                    options={'maxiter': inputs['numerics']['MAXITER_single_stage']}, tol=1e-12
                     )
         
             res = outputs['result']
