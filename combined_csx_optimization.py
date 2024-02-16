@@ -337,6 +337,7 @@ base_curves = [c.curve for c in base_coils]
 
 # Define the BiotSavart field and set evaluation points on the VMEC boundary
 bs = BiotSavart(full_coils)
+bs_wp = BiotSavart(wp_coils) # just for output
 bs.set_points( surf.gamma().reshape((-1,3)) )
 
 # Save initial coils and surface
@@ -344,6 +345,7 @@ if comm.rank==0:
     coils_to_vtk( full_coils, os.path.join(coils_results_path, "initial_coils") )
     surf_to_vtk( os.path.join(coils_results_path, "initial_surface"), bs, surf )
     bs.save( os.path.join(coils_results_path, "bs_initial.json") )
+    bs_wp.save( os.path.join(coils_results_path, "bs_wp_initial.json") )
 
 
 # =================================================================================================
@@ -479,14 +481,6 @@ il_curveZ_threshold = inputs['cnt_coils']['target']['IL_maxZ_threshold']
 il_curveZ_weight = inputs['cnt_coils']['target']['IL_maxZ_weight']
 Jcoils = add_target( Jcoils, LpCurveZ( il_curve, 2, il_curveZ_threshold ), il_curveZ_weight )
 
-il_vessel_threshold = inputs['cnt_coils']['target']['IL_vessel_threshold'] 
-il_vessel_weight = inputs['cnt_coils']['target']['IL_vessel_weight']
-if il_vessel_threshold<0 and il_vessel_weight.value!=0:
-    raise ValueError('il_vessel_threshold should be greater than 0!')
-vessel = CSX_VacuumVessel()
-vpenalty = VesselConstraint( [il_curve], vessel, il_vessel_threshold )
-Jcoils = add_target( Jcoils, vpenalty, il_vessel_weight )
-
 il_arclength_weight = inputs['cnt_coils']['target']['arclength_weight'] 
 Jcoils = add_target( Jcoils, ArclengthVariation( il_curve ), il_arclength_weight )
 
@@ -515,6 +509,14 @@ if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
     winding_surf = CSX_VacuumVessel(scale = 0.8)
     wp_sw_weight = inputs['wp_coils']['target']['winding_surface_weight']
     Jcoils = add_target( Jcoils, WindingSurface( wp_base_curves, winding_surf, 0.0 ), wp_sw_weight ) 
+
+il_vessel_threshold = inputs['cnt_coils']['target']['IL_vessel_threshold'] 
+il_vessel_weight = inputs['cnt_coils']['target']['IL_vessel_weight']
+if il_vessel_threshold<0 and il_vessel_weight.value!=0:
+    raise ValueError('il_vessel_threshold should be greater than 0!')
+vessel = CSX_VacuumVessel()
+vpenalty = VesselConstraint( [il_curve] + wp_base_curves, vessel, il_vessel_threshold )
+Jcoils = add_target( Jcoils, vpenalty, il_vessel_weight )
 
 Jccdist = CurveCurveDistance(full_curves, inputs['CC_THRESHOLD'], num_basecurves=len(full_curves))
 Jcoils = add_target( Jcoils, Jccdist, inputs['CC_WEIGHT'] ) 
@@ -609,6 +611,7 @@ if inputs['numerics']['MAXITER_stage_2'] > 0:
         coils_to_vtk( full_coils, os.path.join(coils_results_path, "coils_post_stage_2") )
         surf_to_vtk( os.path.join(coils_results_path, "surf_post_stage_2"), bs, surf )
         bs.save( os.path.join(coils_results_path, "bs_post_stage_2.json") )
+        bs_wp.save( os.path.join(coils_results_path, "bs_wp_post_stage_2.json") )
 
 
 
@@ -1044,4 +1047,5 @@ if comm.rank==0:
         pickle.dump( outputs, f )
 
     bs.save( os.path.join(coils_results_path, "bs_output.json") )
+    bs_wp.save( os.path.join(coils_results_path, "bs_wp_output.json") )
     vmec.write_input(os.path.join(this_path, f'input.final'))

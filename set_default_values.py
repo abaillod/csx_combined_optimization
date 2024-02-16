@@ -208,12 +208,6 @@ def set_default(inputs):
     
     if 'dofs' not in inputs['wp_coils'].keys():    
         inputs['wp_coils']['dofs'] = dict()
-    if 'order' not in inputs['wp_coils']['dofs'].keys():
-        out = logprint('Setting default value for wp_coils dofs order', out)
-        inputs['wp_coils']['dofs']['order'] = 2     # The xn, yn, zn with |n|<=order will be unfixed
-    if 'planar' not in inputs['wp_coils']['dofs'].keys():
-        out = logprint('Setting default value for wp_coils dofs planar', out)
-        inputs['wp_coils']['dofs']['planar'] = True # Enforce coils to remain planar if True (fix all yn)
     if 'name' not in inputs['wp_coils']['dofs'].keys():
         inputs['wp_coils']['dofs']['name'] = [] # by default curve is fixed
                     
