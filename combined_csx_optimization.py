@@ -508,7 +508,13 @@ if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
     
     winding_surf = CSX_VacuumVessel(scale = 0.8)
     wp_sw_weight = inputs['wp_coils']['target']['winding_surface_weight']
-    Jcoils = add_target( Jcoils, WindingSurface( wp_base_curves, winding_surf, 0.0 ), wp_sw_weight ) 
+    Jcoils = add_target( Jcoils, WindingSurface( wp_base_curves, winding_surf, 0.0 ), wp_sw_weight )
+
+
+    wp_maxZ_threshold = inputs['wp_coils']['target']['WP_maxZ_threshold']
+    wp_maxZ_weight = inputs['wp_coils']['target']['WP_maxZ_weight']
+    Jcoils = add_target( Jcoils, sum([LpCurveZ( c, 2, wp_maxZ_threshold ) for c in wp_base_curves]), wp_maxZ_weight )
+ 
 
 il_vessel_threshold = inputs['cnt_coils']['target']['IL_vessel_threshold'] 
 il_vessel_weight = inputs['cnt_coils']['target']['IL_vessel_weight']
@@ -589,8 +595,8 @@ for c in wp_base_curves:
         c.unfix(dofname)
 
 # Unfix WP current
-for c in wp_base_currents:
-    c.unfix_all()
+for c in wp_base_coils:
+    c.current.unfix_all()
 
 # Save initial degrees of freedom
 log_print('The initial coils degrees of freedom are:\n')

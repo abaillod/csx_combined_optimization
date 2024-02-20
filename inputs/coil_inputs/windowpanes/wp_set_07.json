@@ -4,13 +4,13 @@
   "@version": "1.0.0.post37+g20265c3f",
   "graph": {
     "$type": "ref",
-    "value": "BiotSavart5"
+    "value": "BiotSavart7"
   },
   "simsopt_objs": {
-    "6080851776": {
+    "5988219968": {
       "@module": "simsopt._core.optimizable",
       "@class": "DOFs",
-      "@name": "6080851776",
+      "@name": "5988219968",
       "@version": "1.0.0.post37+g20265c3f",
       "x": {
         "@module": "numpy",
@@ -93,10 +93,10 @@
         ]
       }
     },
-    "csx_windowpane_curve_constant_R7": {
+    "csx_windowpane_curve_constant_R9": {
       "@module": "csx_windowpane",
       "@class": "csx_windowpane_curve_constant_R",
-      "@name": "csx_windowpane_curve_constant_R7",
+      "@name": "csx_windowpane_curve_constant_R9",
       "@version": null,
       "quadpoints": {
         "@module": "numpy",
@@ -237,13 +237,13 @@
       "Rvessel": 0.7857999999999999,
       "dofs": {
         "$type": "ref",
-        "value": "6080851776"
+        "value": "5988219968"
       }
     },
-    "6025084992": {
+    "6029488576": {
       "@module": "simsopt._core.optimizable",
       "@class": "DOFs",
-      "@name": "6025084992",
+      "@name": "6029488576",
       "@version": "1.0.0.post37+g20265c3f",
       "x": {
         "@module": "numpy",
@@ -281,163 +281,163 @@
         ]
       }
     },
-    "Current11": {
+    "Current13": {
       "@module": "simsopt.field.coil",
       "@class": "Current",
-      "@name": "Current11",
+      "@name": "Current13",
       "@version": "1.0.0.post37+g20265c3f",
       "current": 0.0,
       "dofs": {
         "$type": "ref",
-        "value": "6025084992"
+        "value": "6029488576"
       }
     },
-    "ScaledCurrent23": {
+    "ScaledCurrent29": {
       "@module": "simsopt.field.coil",
       "@class": "ScaledCurrent",
-      "@name": "ScaledCurrent23",
+      "@name": "ScaledCurrent29",
       "@version": "1.0.0.post37+g20265c3f",
       "current_to_scale": {
         "$type": "ref",
-        "value": "Current11"
+        "value": "Current13"
       },
-      "scale": 10000.0
+      "scale": 100000.0
     },
-    "Coil25": {
+    "Coil41": {
       "@module": "simsopt.field.coil",
       "@class": "Coil",
-      "@name": "Coil25",
+      "@name": "Coil41",
       "@version": "1.0.0.post37+g20265c3f",
       "curve": {
         "$type": "ref",
-        "value": "csx_windowpane_curve_constant_R7"
+        "value": "csx_windowpane_curve_constant_R9"
       },
       "current": {
         "$type": "ref",
-        "value": "ScaledCurrent23"
+        "value": "ScaledCurrent29"
       }
     },
-    "RotatedCurve25": {
+    "RotatedCurve31": {
       "@module": "simsopt.geo.curve",
       "@class": "RotatedCurve",
-      "@name": "RotatedCurve25",
+      "@name": "RotatedCurve31",
       "@version": "1.0.0.post37+g20265c3f",
       "curve": {
         "$type": "ref",
-        "value": "csx_windowpane_curve_constant_R7"
+        "value": "csx_windowpane_curve_constant_R9"
       },
       "phi": 0.0,
       "flip": true
     },
-    "ScaledCurrent24": {
+    "ScaledCurrent30": {
       "@module": "simsopt.field.coil",
       "@class": "ScaledCurrent",
-      "@name": "ScaledCurrent24",
+      "@name": "ScaledCurrent30",
       "@version": "1.0.0.post37+g20265c3f",
       "current_to_scale": {
         "$type": "ref",
-        "value": "ScaledCurrent23"
+        "value": "ScaledCurrent29"
       },
       "scale": -1.0
     },
-    "Coil26": {
+    "Coil42": {
       "@module": "simsopt.field.coil",
       "@class": "Coil",
-      "@name": "Coil26",
+      "@name": "Coil42",
       "@version": "1.0.0.post37+g20265c3f",
       "curve": {
         "$type": "ref",
-        "value": "RotatedCurve25"
+        "value": "RotatedCurve31"
       },
       "current": {
         "$type": "ref",
-        "value": "ScaledCurrent24"
+        "value": "ScaledCurrent30"
       }
     },
-    "RotatedCurve26": {
+    "RotatedCurve32": {
       "@module": "simsopt.geo.curve",
       "@class": "RotatedCurve",
-      "@name": "RotatedCurve26",
+      "@name": "RotatedCurve32",
       "@version": "1.0.0.post37+g20265c3f",
       "curve": {
         "$type": "ref",
-        "value": "csx_windowpane_curve_constant_R7"
+        "value": "csx_windowpane_curve_constant_R9"
       },
       "phi": 3.141592653589793,
       "flip": false
     },
-    "Coil27": {
+    "Coil43": {
       "@module": "simsopt.field.coil",
       "@class": "Coil",
-      "@name": "Coil27",
+      "@name": "Coil43",
       "@version": "1.0.0.post37+g20265c3f",
       "curve": {
         "$type": "ref",
-        "value": "RotatedCurve26"
+        "value": "RotatedCurve32"
       },
       "current": {
         "$type": "ref",
-        "value": "ScaledCurrent23"
+        "value": "ScaledCurrent29"
       }
     },
-    "RotatedCurve27": {
+    "RotatedCurve33": {
       "@module": "simsopt.geo.curve",
       "@class": "RotatedCurve",
-      "@name": "RotatedCurve27",
+      "@name": "RotatedCurve33",
       "@version": "1.0.0.post37+g20265c3f",
       "curve": {
         "$type": "ref",
-        "value": "csx_windowpane_curve_constant_R7"
+        "value": "csx_windowpane_curve_constant_R9"
       },
       "phi": 3.141592653589793,
       "flip": true
     },
-    "ScaledCurrent25": {
+    "ScaledCurrent31": {
       "@module": "simsopt.field.coil",
       "@class": "ScaledCurrent",
-      "@name": "ScaledCurrent25",
+      "@name": "ScaledCurrent31",
       "@version": "1.0.0.post37+g20265c3f",
       "current_to_scale": {
         "$type": "ref",
-        "value": "ScaledCurrent23"
+        "value": "ScaledCurrent29"
       },
       "scale": -1.0
     },
-    "Coil28": {
+    "Coil44": {
       "@module": "simsopt.field.coil",
       "@class": "Coil",
-      "@name": "Coil28",
+      "@name": "Coil44",
       "@version": "1.0.0.post37+g20265c3f",
       "curve": {
         "$type": "ref",
-        "value": "RotatedCurve27"
+        "value": "RotatedCurve33"
       },
       "current": {
         "$type": "ref",
-        "value": "ScaledCurrent25"
+        "value": "ScaledCurrent31"
       }
     },
-    "BiotSavart5": {
+    "BiotSavart7": {
       "@module": "simsopt.field.biotsavart",
       "@class": "BiotSavart",
-      "@name": "BiotSavart5",
+      "@name": "BiotSavart7",
       "@version": "1.0.0.post37+g20265c3f",
       "coils": [
         {
           "$type": "ref",
-          "value": "Coil25"
+          "value": "Coil41"
         },
         {
           "$type": "ref",
-          "value": "Coil26"
+          "value": "Coil42"
         },
         {
           "$type": "ref",
-          "value": "Coil27"
+          "value": "Coil43"
         },
         {
           "$type": "ref",
-          "value": "Coil28"
+          "value": "Coil44"
         }
       ],
       "points": {
