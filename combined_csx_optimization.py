@@ -319,7 +319,7 @@ else:
     nwp_base = inputs['wp_coils']['geometry']['n_base_coils']
     if nwp_base is None:
         raise ValueError('Need to provide number of base WP coils')
-    wp_base_coils = bs.coils[:nwp_base]
+    wp_base_coils = bs.coils[:nwp_base+1]
     wp_base_curves = [c.curve for c in wp_base_coils]
     wp_base_currents = [c.current for c in wp_base_coils]
 
