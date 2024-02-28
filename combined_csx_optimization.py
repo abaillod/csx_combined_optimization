@@ -508,7 +508,14 @@ if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
     
     winding_surf = CSX_VacuumVessel(scale = 0.8)
     wp_sw_weight = inputs['wp_coils']['target']['winding_surface_weight']
-    Jcoils = add_target( Jcoils, WindingSurface( wp_base_curves, winding_surf, 0.0 ), wp_sw_weight ) 
+    Jcoils = add_target( Jcoils, WindingSurface( wp_base_curves, winding_surf, 0.0 ), wp_sw_weight )
+
+
+    wp_maxZ_threshold = inputs['wp_coils']['target']['WP_maxZ_threshold']
+    wp_maxZ_weight = inputs['wp_coils']['target']['WP_maxZ_weight']
+    J_maxZ_wp = sum([LpCurveZ( c, 2, wp_maxZ_threshold ) for c in wp_base_curves])
+    Jcoils = add_target( Jcoils, J_maxZ_wp, wp_maxZ_weight )
+ 
 
 il_vessel_threshold = inputs['cnt_coils']['target']['IL_vessel_threshold'] 
 il_vessel_weight = inputs['cnt_coils']['target']['IL_vessel_weight']
@@ -589,8 +596,8 @@ for c in wp_base_curves:
         c.unfix(dofname)
 
 # Unfix WP current
-for c in wp_base_currents:
-    c.unfix_all()
+for c in wp_base_coils:
+    c.current.unfix_all()
 
 # Save initial degrees of freedom
 log_print('The initial coils degrees of freedom are:\n')
@@ -889,9 +896,10 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         outstr += f", C-S-Sep={outputs['min_CS'][-1]:.5E}"
         outstr += f", IL length={outputs['IL_length'][-1]:.5E},  IL ∫ϰ²/L={outputs['IL_msc'][-1]:.5E},  IL ∫max(ϰ-ϰ0,0)^2={outputs['IL_max_curvature'][-1]:.5E}\n"
         outstr += f"Vessel penalty is {outputs['vessel_penalty'][-1]:.2E}\n"
-        if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
+        if len(wp_base_curves)>0:
             for i, (l, msc, jcs) in enumerate(zip(outputs['WP_length'][-1], outputs['WP_msc'][-1], outputs['WP_max_curvature'][-1])):
-                outstr += f"WP_{i:d} length={l:.5E}, ∫ϰ²/L={msc:.5E}, ∫max(ϰ-ϰ0,0)^2={jcs:.5E}\n" 
+                outstr += f"WP_{i:d} length={l:.5E}, msc={msc:.5E}, max(c,0)^2={jcs:.5E}\n"
+                outstr += f"WP max Z constraint={J_maxZ_wp.J():.5E}\n"
         outstr += f"\n"
                 
         # Evaluate Jacobian - this is some magic math copied from Rogerio's code

@@ -3,8 +3,8 @@
 #SBATCH --account=apam
 #SBATCH -N 1                 # Recommended by Grace
 #SBATCH --ntasks-per-node=32 # Maximum
-#SBATCH --job-name=csx_combined_optimization
-#SBATCH --time=0-12:00       # Might be too small. Can restart from an iteration if necessary
+#SBATCH --job-name=CSX
+#SBATCH --time=1-23:59       # Might be too small. Can restart from an iteration if necessary
 #SBATCH --mem-per-cpu=5G     # Maximum - Ginsburg has 187G available per node
 
 source ~/.bashrc

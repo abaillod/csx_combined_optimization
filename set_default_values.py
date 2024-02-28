@@ -244,6 +244,12 @@ def set_default(inputs):
     if 'winding_surface_weight' not in inputs['wp_coils']['target']:
         out = logprint('Setting default value for wp_coils target winding_surface_weight', out)
         inputs['wp_coils']['target']['winding_surface_weight'] = Weight(0)
+    if 'WP_maxZ_threshold' not in inputs['wp_coils']['target'].keys():
+        out = logprint('Setting default value for wp_coils target WP_maxZ_threshold', out)
+        inputs['wp_coils']['target']['WP_maxZ_threshold'] = 0.75
+    if 'WP_maxZ_weight' not in inputs['cnt_coils']['target'].keys():
+        out = logprint('Setting default value for cnt_coils target WP_maxZ_weight', out)
+        inputs['wp_coils']['target']['WP_maxZ_weight'] = Weight(0)
         
         
     # NUMERICS

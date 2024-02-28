@@ -1,6 +1,6 @@
 #!/bin/sh
 
-for ii in 0 1 2 3 4 5 
+for ii in 0 1 2 3 4 5 6 7 
 do 
 	if [ $ii -eq 0 ]
 	then
