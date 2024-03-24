@@ -80,7 +80,7 @@ args = parser.parse_args()
 # INITIALIZATION
 # --------------
 # Setup MPI
-comm = MPI.COMM_WORLD
+#comm = MPI.COMM_WORLD
 mpi = MpiPartition()
 
 # Paths
@@ -112,9 +112,8 @@ else:
     dir_name = 'runs/' + date.now().isoformat(timespec='seconds') + '/'
 
 # If directory already exist, crash. We don't want to loose optimization results we obtained in a former run!
-if comm.rank == 0: 
+if MPI.COMM_WORLD.rank == 0: 
     os.makedirs(dir_name, exist_ok=False)
-MPI.COMM_WORLD.Barrier()
 
 
 # Create a few more paths, and move in result directory. This is useful so that all output files produced by simsopt
@@ -123,9 +122,10 @@ this_path = os.path.join(parent_path, dir_name)
 os.chdir(this_path)
 vmec_results_path = os.path.join(this_path, "vmec")
 coils_results_path = os.path.join(this_path, "coils")
-if comm.rank == 0: 
+if MPI.COMM_WORLD.rank == 0: 
     os.makedirs(vmec_results_path, exist_ok=True)
     os.makedirs(coils_results_path, exist_ok=True)
+MPI.COMM_WORLD.Barrier()
 
 
 # Create log file, define function to append to log file
@@ -148,14 +148,14 @@ def log_print(mystr):
         - mystr: String to be printed
         - first: Set to True to create log file. 
     """
-    if comm.rank == 0: 
+    if MPI.COMM_WORLD.rank == 0: 
         with open(os.path.join(this_path,'log.txt'), 'a') as f:
             f.write(mystr)
 
 # Save input
 # We save both the input as a pickle (to be called again to repeat the optimization), and as
 # a text file, for a quick vizualization.
-if comm.rank == 0: 
+if MPI.COMM_WORLD.rank == 0: 
     with open(os.path.join(this_path, 'input.pckl'), 'wb') as f:
         pickle.dump(inputs, f)
 
@@ -180,7 +180,7 @@ def print_dict_recursive(file, d, order=0, k=None):
             file.write('')
         file.write(f'{k} = {d}')
 
-if comm.rank == 0: 
+if MPI.COMM_WORLD.rank == 0: 
     with open(os.path.join(this_path, 'input.txt'), 'w') as f:
         print_dict_recursive(f, inputs)
 
@@ -341,7 +341,7 @@ bs_wp = BiotSavart(wp_coils) # just for output
 bs.set_points( surf.gamma().reshape((-1,3)) )
 
 # Save initial coils and surface
-if comm.rank==0:
+if MPI.COMM_WORLD.rank==0:
     coils_to_vtk( full_coils, os.path.join(coils_results_path, "initial_coils") )
     surf_to_vtk( os.path.join(coils_results_path, "initial_surface"), bs, surf )
     bs.save( os.path.join(coils_results_path, "bs_initial.json") )
@@ -570,69 +570,6 @@ def fun_coils(dofs, info):
     return J, grad
 
 
-# For the first optimization stage, we only optimize the coils to match the surface initial guess.
-Jcoils.fix_all()
-
-# Unfix IL geometry
-il_base_curve = il_curve
-while hasattr(il_base_curve, 'curve'):
-    il_base_curve = il_base_curve.curve
-il_base_curve.name = 'IL_base_curve'
-
-if inputs['cnt_coils']['dofs']['IL_geometry_free']:
-    for ii in range(inputs['cnt_coils']['dofs']['IL_order']+1):
-        il_base_curve.unfix(f'xc({ii})')
-        if ii>0:
-            il_base_curve.unfix(f'ys({ii})')
-            il_base_curve.unfix(f'zs({ii})')
-
-# Unfix PF current
-if inputs['cnt_coils']['dofs']['PF_current_free']:
-    pf_base_current.unfix_all()
-
-# Unfix WP geometry
-for c in wp_base_curves:
-    for dofname in inputs['wp_coils']['dofs']['name']:
-        c.unfix(dofname)
-
-# Unfix WP current
-for c in wp_base_coils:
-    c.current.unfix_all()
-
-# Save initial degrees of freedom
-log_print('The initial coils degrees of freedom are:\n')
-if comm.rank == 0: 
-    for name, dof in zip(Jcoils.dof_names, Jcoils.x):
-        log_print(f"{name}={dof:.2e}\n")
-    log_print("\n")
-
-# Run the stage II optimization
-dofs = Jcoils.x
-if inputs['numerics']['MAXITER_stage_2'] > 0:
-    # Run minimization
-    options={'maxiter': inputs['numerics']['MAXITER_stage_2'], 'maxcor': 300}
-    res = minimize(fun_coils, dofs, jac=True, method='L-BFGS-B', args=({'Nfeval': 0}), options=options, tol=1e-12)
-    
-    # Save coils and surface post stage-two
-    if comm.rank==0:
-        coils_to_vtk( full_coils, os.path.join(coils_results_path, "coils_post_stage_2") )
-        surf_to_vtk( os.path.join(coils_results_path, "surf_post_stage_2"), bs, surf )
-        bs.save( os.path.join(coils_results_path, "bs_post_stage_2.json") )
-        bs_wp.save( os.path.join(coils_results_path, "bs_wp_post_stage_2.json") )
-
-
-
-
-
-# =================================================================================================
-# FULL COMBINED OPTIMIZATION
-# --------------------------
-# We now construct the full, combined optimization problem. We define a new optimization function, that
-# encompasses the coils objective, some plasma objectives, and the quadratic flux across the plasma boundary.
-
-if inputs['numerics']['MAXITER_single_stage'] == 0:
-    sys.exit()
-
 # We now include both the coil penalty and the plasma target functions
 outputs = dict()
 outputs['J'] = []                   # Full target function
@@ -662,116 +599,6 @@ outputs['vmec'] = dict()
 outputs['vmec']['fsqr'] = []        # Force balance error in VMEC, radial direction ?
 outputs['vmec']['fsqz'] = []        # Force balance error in VMEC, vertical direction ?
 outputs['vmec']['fsql'] = []        # Force balance error in VMEC, ??? direction ?
-
-# Define QS metric. Here we target QS (M=1, N=0)
-qs = QuasisymmetryRatioResidual(
-        vmec, inputs['vmec']['target']['qa_surface'], helicity_m=1, helicity_n=0, 
-        ntheta=inputs['vmec']['target']['qa_ntheta'], nphi=inputs['vmec']['target']['qa_nphi']
-)
-
-class remake_iota(Optimizable):
-    """ Penalty function for the mean value of iota. 
-
-    This is useful to use the QuadraticPenalty function of simsopt.
-
-    Args:
-        - vmec: simsopt.mhd.Vmec instance
-    """
-    def __init__(self, vmec):
-        self.vmec = vmec
-        super().__init__(depends_on=[vmec])
-    def J(self):
-        try:
-            return self.vmec.mean_iota()
-        except ObjectiveFailure: 
-            log_print(f"Error evaluating iota! ")
-            return np.nan
-
-class remake_aspect(Optimizable):
-    """ Penalty function for the aspect ratio. 
-
-    This is useful to use the QuadraticPenalty function of simsopt.
-
-    Args:
-        - vmec: simsopt.mhd.Vmec instance
-    """
-    def __init__(self, vmec):
-        self.vmec = vmec
-        super().__init__(depends_on=[vmec])
-    def J(self):
-        "returns value of quantity"
-        try: 
-            return self.vmec.aspect()
-        except ObjectiveFailure: 
-            log_print(f"Error evaluating aspect ratio! ")
-            return np.nan
-
-class quasisymmetry(Optimizable):
-    def __init__(self, qs):
-        self.qs = qs  
-        super().__init__(depends_on=[qs])
-    def J(self):
-        "returns value of quantity" 
-        try:
-            return self.qs.total()
-        except ObjectiveFailure: 
-            with open(os.path.join(this_path, 'log.txt'), 'a') as f:
-                f.write(f"Error evaluating QS! ")
-            return np.nan
-
-class volume(Optimizable):
-    def __init__(self, surf):
-        self.surf = surf
-        super().__init__(depends_on=[surf])
-    def J(self):
-        try:
-            return self.surf.volume()
-        except ObjectiveFailure:
-            with open(os.path.join(this_path, 'log.txt'), 'a') as f:
-                f.write(f"Error evaluating Volume! ")
-            return np.nan
-            
-
-
-J_iota = inputs['vmec']['target']['iota_weight'] * QuadraticPenalty(remake_iota(vmec), inputs['vmec']['target']['iota'], inputs['vmec']['target']['iota_constraint_type'])
-J_aspect = inputs['vmec']['target']['aspect_ratio_weight'] * QuadraticPenalty(remake_aspect(vmec), inputs['vmec']['target']['aspect_ratio'], inputs['vmec']['target']['aspect_ratio_constraint_type'])
-J_qs = QuadraticPenalty(quasisymmetry(qs), 0, 'identity') 
-J_volume =  inputs['vmec']['target']['volume_weight'] * QuadraticPenalty( volume( surf ),  inputs['vmec']['target']['volume'],  inputs['vmec']['target']['volume_constraint_type'] )
-
-
-Jplasma = J_qs
-# Only add targets with non-zero weight.
-if inputs['vmec']['target']['iota_weight'].value>0:
-    Jplasma += J_iota
-if inputs['vmec']['target']['aspect_ratio_weight'].value>0:
-    Jplasma += J_aspect
-if inputs['vmec']['target']['volume_weight'].value>0:
-    Jplasma += J_volume
-
-
-
-# Define VMEC dofs
-vmec.fix_all()
-vmec.boundary.fixed_range(
-    0, inputs['vmec']['dofs']['mpol'], 
-    -inputs['vmec']['dofs']['ntor'], inputs['vmec']['dofs']['ntor'], 
-    fixed=False
-)
-
-# /!|/!|/!|/!|/!|/!| WE WANT TO CHANGE THE ASPECT RATIO /!|/!|/!|/!|/!|/!|/!|
-# If we keep R00 fixed, then the only way to change the aspect ratio is to increase
-# the minor radius. But if the IL coils length is constrained, we might run into a problem!
-# vmec.boundary.fix('rc(0,0)') # We want to keep major radius fixed.
-# 
-# Well I thought more about that and I think we should fix it. 
-# Fixing R00 and aspect ratio puts a contraint on the volume.
-# Leave it as an option for the user... default value if False.
-if not inputs['cnt_coils']['dofs']['R00_free']:
-    vmec.boundary.fix('rc(0,0)')
-
-
-dofs = np.concatenate((Jcoils.x, vmec.x))
-ndof_vmec = int(len(vmec.boundary.x))
 
 
 def set_dofs(x0):
@@ -925,7 +752,7 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
     log_print(outstr)
 
     # Save pickle every 10 iterations
-    if np.mod(info['Nfeval'],10)==1 and comm.rank==0:
+    if np.mod(info['Nfeval'],10)==1 and MPI.COMM_WORLD.rank==0:
         with open(os.path.join(this_path, 'outputs.pckl'), 'wb') as f:
             pickle.dump( outputs, f )
     
@@ -933,6 +760,184 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
     outputs['dJ'].append(grad)
 
     return J, grad
+
+# For the first optimization stage, we only optimize the coils to match the surface initial guess.
+Jcoils.fix_all()
+
+# Unfix IL geometry
+il_base_curve = il_curve
+while hasattr(il_base_curve, 'curve'):
+    il_base_curve = il_base_curve.curve
+il_base_curve.name = 'IL_base_curve'
+
+if inputs['cnt_coils']['dofs']['IL_geometry_free']:
+    for ii in range(inputs['cnt_coils']['dofs']['IL_order']+1):
+        il_base_curve.unfix(f'xc({ii})')
+        if ii>0:
+            il_base_curve.unfix(f'ys({ii})')
+            il_base_curve.unfix(f'zs({ii})')
+
+# Unfix PF current
+if inputs['cnt_coils']['dofs']['PF_current_free']:
+    pf_base_current.unfix_all()
+
+# Unfix WP geometry
+for c in wp_base_curves:
+    for dofname in inputs['wp_coils']['dofs']['name']:
+        c.unfix(dofname)
+
+# Unfix WP current
+for c in wp_base_coils:
+    c.current.unfix_all()
+
+# Define VMEC dofs
+vmec.fix_all()
+vmec.boundary.fixed_range(
+    0, inputs['vmec']['dofs']['mpol'], 
+    -inputs['vmec']['dofs']['ntor'], inputs['vmec']['dofs']['ntor'], 
+    fixed=False
+)
+
+if not inputs['cnt_coils']['dofs']['R00_free']:
+    vmec.boundary.fix('rc(0,0)')
+
+# Save initial degrees of freedom
+log_print('The initial coils degrees of freedom are:\n')
+if MPI.COMM_WORLD.rank == 0: 
+    for name, dof in zip(Jcoils.dof_names, Jcoils.x):
+        log_print(f"{name}={dof:.2e}\n")
+    log_print("\n")
+
+log_print('The initial surf degrees of freedom are:\n')
+if MPI.COMM_WORLD.rank == 0: 
+    for name, dof in zip(vmec.boundary.dof_names, vmec.boundary.x):
+        log_print(f"{name}={dof:.2e}\n")
+    log_print("\n")
+
+
+dofs = np.concatenate((Jcoils.x, vmec.x))
+ndof_vmec = int(len(vmec.boundary.x))
+
+# Run the stage II optimization
+if inputs['numerics']['MAXITER_stage_2'] > 0:
+    # Save coils and surface post stage-two
+    if MPI.COMM_WORLD.rank==0:
+        # Run minimization
+        options={'maxiter': inputs['numerics']['MAXITER_stage_2'], 'maxcor': 300}
+        res = minimize(fun_coils, dofs[:-ndof_vmec], jac=True, method='L-BFGS-B', args=({'Nfeval': 0}), options=options, tol=1e-12)
+
+        coils_to_vtk( full_coils, os.path.join(coils_results_path, "coils_post_stage_2") )
+        surf_to_vtk( os.path.join(coils_results_path, "surf_post_stage_2"), bs, surf )
+        bs.save( os.path.join(coils_results_path, "bs_post_stage_2.json") )
+        bs_wp.save( os.path.join(coils_results_path, "bs_wp_post_stage_2.json") )
+
+    dofs[:-ndof_vmec] = res.x
+    Jcoils.x = dofs[:-ndof_vmec]
+    mpi.comm_world.Bcast(dofs, root=0)
+
+
+
+
+
+# =================================================================================================
+# FULL COMBINED OPTIMIZATION
+# --------------------------
+# We now construct the full, combined optimization problem. We define a new optimization function, that
+# encompasses the coils objective, some plasma objectives, and the quadratic flux across the plasma boundary.
+
+if inputs['numerics']['MAXITER_single_stage'] == 0:
+    sys.exit()
+
+
+# Define QS metric. Here we target QS (M=1, N=0)
+qs = QuasisymmetryRatioResidual(
+        vmec, inputs['vmec']['target']['qa_surface'], helicity_m=1, helicity_n=0, 
+        ntheta=inputs['vmec']['target']['qa_ntheta'], nphi=inputs['vmec']['target']['qa_nphi']
+)
+
+class remake_iota(Optimizable):
+    """ Penalty function for the mean value of iota. 
+
+    This is useful to use the QuadraticPenalty function of simsopt.
+
+    Args:
+        - vmec: simsopt.mhd.Vmec instance
+    """
+    def __init__(self, vmec):
+        self.vmec = vmec
+        super().__init__(depends_on=[vmec])
+    def J(self):
+        try:
+            return self.vmec.mean_iota()
+        except ObjectiveFailure: 
+            log_print(f"Error evaluating iota! ")
+            return np.nan
+
+class remake_aspect(Optimizable):
+    """ Penalty function for the aspect ratio. 
+
+    This is useful to use the QuadraticPenalty function of simsopt.
+
+    Args:
+        - vmec: simsopt.mhd.Vmec instance
+    """
+    def __init__(self, vmec):
+        self.vmec = vmec
+        super().__init__(depends_on=[vmec])
+    def J(self):
+        "returns value of quantity"
+        try: 
+            return self.vmec.aspect()
+        except ObjectiveFailure: 
+            log_print(f"Error evaluating aspect ratio! ")
+            return np.nan
+
+class quasisymmetry(Optimizable):
+    def __init__(self, qs):
+        self.qs = qs  
+        super().__init__(depends_on=[qs])
+    def J(self):
+        "returns value of quantity" 
+        try:
+            return self.qs.total()
+        except ObjectiveFailure: 
+            with open(os.path.join(this_path, 'log.txt'), 'a') as f:
+                f.write(f"Error evaluating QS! ")
+            return np.nan
+
+class volume(Optimizable):
+    def __init__(self, surf):
+        self.surf = surf
+        super().__init__(depends_on=[surf])
+    def J(self):
+        try:
+            return self.surf.volume()
+        except ObjectiveFailure:
+            with open(os.path.join(this_path, 'log.txt'), 'a') as f:
+                f.write(f"Error evaluating Volume! ")
+            return np.nan
+            
+
+
+J_iota = inputs['vmec']['target']['iota_weight'] * QuadraticPenalty(remake_iota(vmec), inputs['vmec']['target']['iota'], inputs['vmec']['target']['iota_constraint_type'])
+J_aspect = inputs['vmec']['target']['aspect_ratio_weight'] * QuadraticPenalty(remake_aspect(vmec), inputs['vmec']['target']['aspect_ratio'], inputs['vmec']['target']['aspect_ratio_constraint_type'])
+J_qs = QuadraticPenalty(quasisymmetry(qs), 0, 'identity') 
+J_volume =  inputs['vmec']['target']['volume_weight'] * QuadraticPenalty( volume( surf ),  inputs['vmec']['target']['volume'],  inputs['vmec']['target']['volume_constraint_type'] )
+
+
+Jplasma = J_qs
+# Only add targets with non-zero weight.
+if inputs['vmec']['target']['iota_weight'].value>0:
+    Jplasma += J_iota
+if inputs['vmec']['target']['aspect_ratio_weight'].value>0:
+    Jplasma += J_aspect
+if inputs['vmec']['target']['volume_weight'].value>0:
+    Jplasma += J_volume
+
+
+
+
+
 
 # Write initial target values
 log_print("=====================================================================\n Starting single stage optimization ...\n")
@@ -950,7 +955,7 @@ dofs_plasma = vmec.x
 
 # Print initial degrees of freedom
 log_print('The initial coils degrees of freedom are:\n')
-if comm.rank == 0: 
+if MPI.COMM_WORLD.rank == 0: 
     for name, dof in zip(Jcoils.dof_names, Jcoils.x):
         log_print(f"{name}={dof:.2e}\n")
     log_print("\n")
@@ -991,63 +996,62 @@ finite_difference_abs_step = inputs['numerics']['finite_difference_abs_step']
 finite_difference_rel_step = inputs['numerics']['finite_difference_rel_step'] 
 with MPIFiniteDifference(Jplasma.J, mpi, diff_method=diff_method, abs_step=finite_difference_abs_step, rel_step=finite_difference_rel_step) as prob_jacobian:
     if mpi.proc0_world:
-        if comm.rank == 0:
-            # Taylor test - coils            
-            fpl = lambda x, info: fun_plasma(x, prob_jacobian, info)
-            outputs['taylor_test'] = dict()
-            outputs['taylor_test']['initial'] = dict()
-            outputs['taylor_test']['eps'] = myeps
+        # Taylor test - coils            
+        fpl = lambda x, info: fun_plasma(x, prob_jacobian, info)
+        outputs['taylor_test'] = dict()
+        outputs['taylor_test']['initial'] = dict()
+        outputs['taylor_test']['eps'] = myeps
 
-            if inputs['numerics']['taylor_test']:
-                log_print('-----------------------------------------------------------------\n')
-                log_print('                              INITIAL TAYLOR TEST \n')
-                log_print('Running initial Taylor test for coils...\n')
-                outputs['taylor_test']['initial']['Jcoils'] = taylor_test(fun_coils, dofs_coils, h1)
-                log_print('Running initial Taylor test for plasma...\n')
-                outputs['taylor_test']['initial']['Jplasma'] = taylor_test(fpl, dofs_plasma, h2)
-                log_print('Running initial Taylor test for full objective...\n')
-                outputs['taylor_test']['initial']['Jtotal'] = taylor_test(fun, dofs, h)
+        if inputs['numerics']['taylor_test']:
+            log_print('-----------------------------------------------------------------\n')
+            log_print('                              INITIAL TAYLOR TEST \n')
+            log_print('Running initial Taylor test for coils...\n')
+            outputs['taylor_test']['initial']['Jcoils'] = taylor_test(fun_coils, dofs_coils, h1)
+            log_print('Running initial Taylor test for plasma...\n')
+            outputs['taylor_test']['initial']['Jplasma'] = taylor_test(fpl, dofs_plasma, h2)
+            log_print('Running initial Taylor test for full objective...\n')
+            outputs['taylor_test']['initial']['Jtotal'] = taylor_test(fun, dofs, h)
             
-            # -------------------------------------------------------------------------------------
-            outputs['result'] = minimize(
-                    fun, dofs, args=(prob_jacobian, {'Nfeval': 0}), jac=True, method='BFGS', 
-                    options={'maxiter': inputs['numerics']['MAXITER_single_stage']}, tol=1e-12
-                    )
+        # -------------------------------------------------------------------------------------
+        outputs['result'] = minimize(
+                fun, dofs, args=(prob_jacobian, {'Nfeval': 0}), jac=True, method='BFGS', 
+                options={'maxiter': inputs['numerics']['MAXITER_single_stage']}, tol=1e-12
+                )
         
-            res = outputs['result']
-            log_print(f"Number of iterations: {res.nit}\n")
-            log_print(f"Number of function evaluations: {res.nfev}\n")
-            log_print(f"Optimization status: {res.status}\n")
-            log_print(f"Final function value: {res.fun}\n")
-            log_print(f"Final gradient: {res.jac}\n" )
-            log_print(f"\n")
-            try:
-                log_print(f"Aspect ratio after optimization: {vmec.aspect()}\n")
-                log_print(f"Mean iota after optimization: {vmec.mean_iota()}\n")
-                log_print(f"Quasisymmetry objective after optimization: {qs.total()}\n")
-                log_print(f"Magnetic well after optimization: {vmec.vacuum_well()}\n")
-            except BaseException as e:
-                log_print(f"Could not print final aspect ratio, mean iota, QS, and vacuum well")
-            log_print(f"Squared flux after optimization: {square_flux.J()}\n")
-            
-            for j, coil in enumerate(base_coils):
-                log_print(f"Current for coil {j}: {coil.current.get_value()}\n")
-            log_print("\n")
-            # -------------------------------------------------------------------------------------
-            # Taylor test
-            if inputs['numerics']['taylor_test']:
-                log_print('----------------------------------------------\n')
-                log_print('                              FINAL TAYLOR TEST \n')
-                outputs['taylor_test']['final'] = dict()
-                log_print('Running final Taylor test for coils...')
-                outputs['taylor_test']['final']['Jcoils'] = taylor_test(fun_coils, dofs_coils, h1)
-                log_print('Running final Taylor test for plasma...')
-                outputs['taylor_test']['final']['Jplasma'] = taylor_test(fpl, dofs_plasma, h2)
-                log_print('Running final Taylor test for full objective...')
-                outputs['taylor_test']['final']['Jtotal'] = taylor_test(fun, dofs, h)
+        res = outputs['result']
+        log_print(f"Number of iterations: {res.nit}\n")
+        log_print(f"Number of function evaluations: {res.nfev}\n")
+        log_print(f"Optimization status: {res.status}\n")
+        log_print(f"Final function value: {res.fun}\n")
+        log_print(f"Final gradient: {res.jac}\n" )
+        log_print(f"\n")
+        try:
+            log_print(f"Aspect ratio after optimization: {vmec.aspect()}\n")
+            log_print(f"Mean iota after optimization: {vmec.mean_iota()}\n")
+            log_print(f"Quasisymmetry objective after optimization: {qs.total()}\n")
+            log_print(f"Magnetic well after optimization: {vmec.vacuum_well()}\n")
+        except BaseException as e:
+            log_print(f"Could not print final aspect ratio, mean iota, QS, and vacuum well")
+        log_print(f"Squared flux after optimization: {square_flux.J()}\n")
+        
+        for j, coil in enumerate(base_coils):
+            log_print(f"Current for coil {j}: {coil.current.get_value()}\n")
+        log_print("\n")
+        # -------------------------------------------------------------------------------------
+        # Taylor test
+        if inputs['numerics']['taylor_test']:
+            log_print('----------------------------------------------\n')
+            log_print('                              FINAL TAYLOR TEST \n')
+            outputs['taylor_test']['final'] = dict()
+            log_print('Running final Taylor test for coils...')
+            outputs['taylor_test']['final']['Jcoils'] = taylor_test(fun_coils, dofs_coils, h1)
+            log_print('Running final Taylor test for plasma...')
+            outputs['taylor_test']['final']['Jplasma'] = taylor_test(fpl, dofs_plasma, h2)
+            log_print('Running final Taylor test for full objective...')
+            outputs['taylor_test']['final']['Jtotal'] = taylor_test(fun, dofs, h)
         
 # Save output
-if comm.rank==0:    
+if MPI.COMM_WORLD.rank==0:    
     coils_to_vtk( full_coils, os.path.join(coils_results_path, "coils_output") )
     surf_to_vtk( os.path.join(coils_results_path, "surf_output"), bs, surf )
 

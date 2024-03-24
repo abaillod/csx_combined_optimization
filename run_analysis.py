@@ -138,6 +138,7 @@ plt.figure()
 plt.plot(s,f)
 plt.xlabel('s [normalized toroidal flux]')
 plt.ylabel('f [quasisymmetry metric]')
+plt.tight_layout()
 plt.savefig(os.path.join(figure_path, 'fquasisymmetry'))
 if args.show:
     plt.show()
@@ -147,6 +148,7 @@ plt.figure()
 plt.plot(s,b.iota)
 plt.xlabel('s [normalized toroidal flux]')
 plt.ylabel('iota')
+plt.tight_layout()
 plt.savefig(os.path.join(figure_path, 'iota'))
 if args.show:
     plt.show()
@@ -154,6 +156,7 @@ if args.show:
 # Plot |B| contours
 plt.figure()
 bx.surfplot(b, js=-1)
+plt.tight_layout()
 plt.savefig(os.path.join(figure_path, 'modB.png'))
 if args.show:
     plt.show()
@@ -163,6 +166,7 @@ plt.figure()
 plt.plot(v.s_half_grid,v.wout.vp[1::])
 plt.xlabel('s [normalized toroidal flux]')
 plt.ylabel('Vp [radial derivative of volume]')
+plt.tight_layout()
 plt.savefig(os.path.join(figure_path, 'magnetic_well'))
 if args.show:
     plt.show()
@@ -177,12 +181,13 @@ bs.set_points(surf.gamma().reshape((-1,3)))
 Bdotn = np.sum(bs.B().reshape((nphi, ntheta, 3)) * surf.unitnormal(), axis=2)
 modB = bs.AbsB().reshape((nphi,ntheta))
 
-fig, ax = plt.subplots(figsize=(12,5))
+fig, ax = plt.subplots()
 c = ax.contourf(theta,phi,Bdotn / modB)
 plt.colorbar(c)
 ax.set_title(r'$\mathbf{B}\cdot\hat{n} / |B|$ ')
 ax.set_ylabel(r'$\phi$')
 ax.set_xlabel(r'$\theta$')
+plt.tight_layout()
 plt.savefig(os.path.join(figure_path, 'normal_field_error.png'))
 
 # Run and plot Poincare section
