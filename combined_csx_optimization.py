@@ -53,6 +53,7 @@ from simsopt._core.util import ObjectiveFailure
 from simsopt.solve import least_squares_mpi_solve
 from simsopt.objectives import ConstrainedProblem
 from simsopt.solve import constrained_mpi_solve
+from simsopt.util import comm_world
 import git
 import argparse
 
@@ -62,7 +63,6 @@ from simsopt.geo.jit import jit
 from simsopt._core.derivative import derivative_dec
 
 from vacuum_vessel import CSX_VacuumVessel, VesselConstraint
-from simsopt.geo import WindingSurface
 
 # Read command line arguments
 parser = argparse.ArgumentParser()
@@ -80,7 +80,7 @@ args = parser.parse_args()
 # INITIALIZATION
 # --------------
 # Setup MPI
-#comm = MPI.COMM_WORLD
+#comm = comm_world
 mpi = MpiPartition()
 
 # Paths
@@ -112,34 +112,30 @@ else:
     dir_name = 'runs/' + date.now().isoformat(timespec='seconds') + '/'
 
 # If directory already exist, crash. We don't want to loose optimization results we obtained in a former run!
-if MPI.COMM_WORLD.rank == 0: 
-    os.makedirs(dir_name, exist_ok=False)
-
+this_path = os.path.join(parent_path, dir_name)
+os.makedirs( this_path, exist_ok=False )
 
 # Create a few more paths, and move in result directory. This is useful so that all output files produced by simsopt
 # are all stored in the same location
-this_path = os.path.join(parent_path, dir_name)
 os.chdir(this_path)
 vmec_results_path = os.path.join(this_path, "vmec")
 coils_results_path = os.path.join(this_path, "coils")
-if MPI.COMM_WORLD.rank == 0: 
+if comm_world.rank == 0: 
     os.makedirs(vmec_results_path, exist_ok=True)
     os.makedirs(coils_results_path, exist_ok=True)
-MPI.COMM_WORLD.Barrier()
 
-
-# Create log file, define function to append to log file
-repo = git.Repo(simsopt.__path__[0], search_parent_directories=True)
-sha0 = repo.head.object.hexsha
-
-repo = git.Repo(search_parent_directories=True)
-sha1 = repo.head.object.hexsha
-with open(os.path.join(this_path,'log.txt'), 'w') as f:
-    f.write("CSX COMBINED OPTIMIZATION\n")
-    f.write(f"Using simsopt version {sha0}\n")
-    f.write(f"Using csx optimization git version {sha1}\n")
-    f.write(f"Date = {date.date(date.now()).isoformat()} at {date.now().strftime('%Hh%M')}\n")
-    f.write(set_default_str)
+    # Create log file, define function to append to log file
+    repo = git.Repo(simsopt.__path__[0], search_parent_directories=True)
+    sha0 = repo.head.object.hexsha
+    
+    repo = git.Repo(search_parent_directories=True)
+    sha1 = repo.head.object.hexsha
+    with open(os.path.join(this_path,'log.txt'), 'w') as f:
+        f.write("CSX COMBINED OPTIMIZATION\n")
+        f.write(f"Using simsopt version {sha0}\n")
+        f.write(f"Using csx optimization git version {sha1}\n")
+        f.write(f"Date = {date.date(date.now()).isoformat()} at {date.now().strftime('%Hh%M')}\n")
+        f.write(set_default_str)
 
 def log_print(mystr):
     """Print into log file
@@ -148,14 +144,14 @@ def log_print(mystr):
         - mystr: String to be printed
         - first: Set to True to create log file. 
     """
-    if MPI.COMM_WORLD.rank == 0: 
+    if comm_world.rank == 0: 
         with open(os.path.join(this_path,'log.txt'), 'a') as f:
             f.write(mystr)
 
 # Save input
 # We save both the input as a pickle (to be called again to repeat the optimization), and as
 # a text file, for a quick vizualization.
-if MPI.COMM_WORLD.rank == 0: 
+if comm_world.rank == 0: 
     with open(os.path.join(this_path, 'input.pckl'), 'wb') as f:
         pickle.dump(inputs, f)
 
@@ -180,7 +176,7 @@ def print_dict_recursive(file, d, order=0, k=None):
             file.write('')
         file.write(f'{k} = {d}')
 
-if MPI.COMM_WORLD.rank == 0: 
+if comm_world.rank == 0: 
     with open(os.path.join(this_path, 'input.txt'), 'w') as f:
         print_dict_recursive(f, inputs)
 
@@ -341,7 +337,7 @@ bs_wp = BiotSavart(wp_coils) # just for output
 bs.set_points( surf.gamma().reshape((-1,3)) )
 
 # Save initial coils and surface
-if MPI.COMM_WORLD.rank==0:
+if comm_world.rank==0:
     coils_to_vtk( full_coils, os.path.join(coils_results_path, "initial_coils") )
     surf_to_vtk( os.path.join(coils_results_path, "initial_surface"), bs, surf )
     bs.save( os.path.join(coils_results_path, "bs_initial.json") )
@@ -506,11 +502,6 @@ if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
     wp_msc_weight = inputs['wp_coils']['target']['msc_weight']
     Jcoils = add_target( Jcoils, sum([QuadraticPenalty(msc, wp_msc_threshold, f='max') for msc in wp_msc]), wp_msc_weight )
     
-    winding_surf = CSX_VacuumVessel(scale = 0.8)
-    wp_sw_weight = inputs['wp_coils']['target']['winding_surface_weight']
-    Jcoils = add_target( Jcoils, WindingSurface( wp_base_curves, winding_surf, 0.0 ), wp_sw_weight )
-
-
     wp_maxZ_threshold = inputs['wp_coils']['target']['WP_maxZ_threshold']
     wp_maxZ_weight = inputs['wp_coils']['target']['WP_maxZ_weight']
     J_maxZ_wp = sum([LpCurveZ( c, 2, wp_maxZ_threshold ) for c in wp_base_curves])
@@ -752,7 +743,7 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
     log_print(outstr)
 
     # Save pickle every 10 iterations
-    if np.mod(info['Nfeval'],10)==1 and MPI.COMM_WORLD.rank==0:
+    if np.mod(info['Nfeval'],10)==1 and comm_world.rank==0:
         with open(os.path.join(this_path, 'outputs.pckl'), 'wb') as f:
             pickle.dump( outputs, f )
     
@@ -803,13 +794,13 @@ if not inputs['cnt_coils']['dofs']['R00_free']:
 
 # Save initial degrees of freedom
 log_print('The initial coils degrees of freedom are:\n')
-if MPI.COMM_WORLD.rank == 0: 
+if comm_world.rank == 0: 
     for name, dof in zip(Jcoils.dof_names, Jcoils.x):
         log_print(f"{name}={dof:.2e}\n")
     log_print("\n")
 
 log_print('The initial surf degrees of freedom are:\n')
-if MPI.COMM_WORLD.rank == 0: 
+if comm_world.rank == 0: 
     for name, dof in zip(vmec.boundary.dof_names, vmec.boundary.x):
         log_print(f"{name}={dof:.2e}\n")
     log_print("\n")
@@ -821,7 +812,7 @@ ndof_vmec = int(len(vmec.boundary.x))
 # Run the stage II optimization
 if inputs['numerics']['MAXITER_stage_2'] > 0:
     # Save coils and surface post stage-two
-    if MPI.COMM_WORLD.rank==0:
+    if comm_world.rank==0:
         # Run minimization
         options={'maxiter': inputs['numerics']['MAXITER_stage_2'], 'maxcor': 300}
         res = minimize(fun_coils, dofs[:-ndof_vmec], jac=True, method='L-BFGS-B', args=({'Nfeval': 0}), options=options, tol=1e-12)
@@ -955,7 +946,7 @@ dofs_plasma = vmec.x
 
 # Print initial degrees of freedom
 log_print('The initial coils degrees of freedom are:\n')
-if MPI.COMM_WORLD.rank == 0: 
+if comm_world.rank == 0: 
     for name, dof in zip(Jcoils.dof_names, Jcoils.x):
         log_print(f"{name}={dof:.2e}\n")
     log_print("\n")
@@ -1051,7 +1042,7 @@ with MPIFiniteDifference(Jplasma.J, mpi, diff_method=diff_method, abs_step=finit
             outputs['taylor_test']['final']['Jtotal'] = taylor_test(fun, dofs, h)
         
 # Save output
-if MPI.COMM_WORLD.rank==0:    
+if comm_world.rank==0:    
     coils_to_vtk( full_coils, os.path.join(coils_results_path, "coils_output") )
     surf_to_vtk( os.path.join(coils_results_path, "surf_output"), bs, surf )
 
