@@ -64,6 +64,9 @@ from simsopt._core.derivative import derivative_dec
 
 from vacuum_vessel import CSX_VacuumVessel, VesselConstraint
 
+# Setup MPI
+mpi = MpiPartition()
+
 # Read command line arguments
 parser = argparse.ArgumentParser()
 
@@ -79,9 +82,6 @@ args = parser.parse_args()
 # ====================================================================================================
 # INITIALIZATION
 # --------------
-# Setup MPI
-#comm = comm_world
-mpi = MpiPartition()
 
 # Paths
 parent_path = str(Path(__file__).parent.resolve()) 
@@ -113,11 +113,13 @@ else:
 
 # If directory already exist, crash. We don't want to loose optimization results we obtained in a former run!
 this_path = os.path.join(parent_path, dir_name)
-os.makedirs( this_path, exist_ok=False )
+if comm_world.rank == 0:
+    os.makedirs( this_path, exist_ok=False )
+MPI.COMM_WORLD.Barrier()
+os.chdir(this_path)
 
 # Create a few more paths, and move in result directory. This is useful so that all output files produced by simsopt
 # are all stored in the same location
-os.chdir(this_path)
 vmec_results_path = os.path.join(this_path, "vmec")
 coils_results_path = os.path.join(this_path, "coils")
 if comm_world.rank == 0: 
@@ -125,7 +127,7 @@ if comm_world.rank == 0:
     os.makedirs(coils_results_path, exist_ok=True)
 
     # Create log file, define function to append to log file
-    repo = git.Repo(simsopt.__path__[0], search_parent_directories=True)
+    repo = git.Repo('/burg/home/ab5667/Github/simsopt', search_parent_directories=True)
     sha0 = repo.head.object.hexsha
     
     repo = git.Repo(search_parent_directories=True)
@@ -443,7 +445,6 @@ class LpCurveZ(Optimizable):
 # flux across VMEC boundary.
 square_flux = SquaredFlux(surf, bs, definition="local")
 Jcoils = square_flux
-
 
 def add_target(Jcoils, J, w):
     # This is a small wrapper to avoid adding some 0*J() to the target function.
@@ -812,23 +813,20 @@ ndof_vmec = int(len(vmec.boundary.x))
 # Run the stage II optimization
 if inputs['numerics']['MAXITER_stage_2'] > 0:
     # Save coils and surface post stage-two
-    if comm_world.rank==0:
-        # Run minimization
-        options={'maxiter': inputs['numerics']['MAXITER_stage_2'], 'maxcor': 300}
-        res = minimize(fun_coils, dofs[:-ndof_vmec], jac=True, method='L-BFGS-B', args=({'Nfeval': 0}), options=options, tol=1e-12)
+    
+    # Run minimization
+    options={'maxiter': inputs['numerics']['MAXITER_stage_2'], 'maxcor': 300}
+    res = minimize(fun_coils, dofs[:-ndof_vmec], jac=True, method='L-BFGS-B', args=({'Nfeval': 0}), options=options, tol=1e-12)
 
+    if comm_world.rank==0:
         coils_to_vtk( full_coils, os.path.join(coils_results_path, "coils_post_stage_2") )
         surf_to_vtk( os.path.join(coils_results_path, "surf_post_stage_2"), bs, surf )
         bs.save( os.path.join(coils_results_path, "bs_post_stage_2.json") )
         bs_wp.save( os.path.join(coils_results_path, "bs_wp_post_stage_2.json") )
 
-    dofs[:-ndof_vmec] = res.x
-    Jcoils.x = dofs[:-ndof_vmec]
-    mpi.comm_world.Bcast(dofs, root=0)
 
-
-
-
+x0 = np.copy(np.concatenate((JF.x, vmec.x)))
+dofs = np.concatenate((JF.x, vmec.x))
 
 # =================================================================================================
 # FULL COMBINED OPTIMIZATION
@@ -986,29 +984,30 @@ diff_method = inputs['numerics']['fndiff_method']
 finite_difference_abs_step = inputs['numerics']['finite_difference_abs_step'] 
 finite_difference_rel_step = inputs['numerics']['finite_difference_rel_step'] 
 with MPIFiniteDifference(Jplasma.J, mpi, diff_method=diff_method, abs_step=finite_difference_abs_step, rel_step=finite_difference_rel_step) as prob_jacobian:
-    if mpi.proc0_world:
-        # Taylor test - coils            
-        fpl = lambda x, info: fun_plasma(x, prob_jacobian, info)
-        outputs['taylor_test'] = dict()
-        outputs['taylor_test']['initial'] = dict()
-        outputs['taylor_test']['eps'] = myeps
+   # if mpi.proc0_world:
+   #     # Taylor test - coils            
+   #     fpl = lambda x, info: fun_plasma(x, prob_jacobian, info)
+   #     outputs['taylor_test'] = dict()
+   #     outputs['taylor_test']['initial'] = dict()
+   #     outputs['taylor_test']['eps'] = myeps
 
-        if inputs['numerics']['taylor_test']:
-            log_print('-----------------------------------------------------------------\n')
-            log_print('                              INITIAL TAYLOR TEST \n')
-            log_print('Running initial Taylor test for coils...\n')
-            outputs['taylor_test']['initial']['Jcoils'] = taylor_test(fun_coils, dofs_coils, h1)
-            log_print('Running initial Taylor test for plasma...\n')
-            outputs['taylor_test']['initial']['Jplasma'] = taylor_test(fpl, dofs_plasma, h2)
-            log_print('Running initial Taylor test for full objective...\n')
-            outputs['taylor_test']['initial']['Jtotal'] = taylor_test(fun, dofs, h)
+   #     if inputs['numerics']['taylor_test']:
+   #         log_print('-----------------------------------------------------------------\n')
+   #         log_print('                              INITIAL TAYLOR TEST \n')
+   #         log_print('Running initial Taylor test for coils...\n')
+   #         outputs['taylor_test']['initial']['Jcoils'] = taylor_test(fun_coils, dofs_coils, h1)
+   #         log_print('Running initial Taylor test for plasma...\n')
+   #         outputs['taylor_test']['initial']['Jplasma'] = taylor_test(fpl, dofs_plasma, h2)
+   #         log_print('Running initial Taylor test for full objective...\n')
+   #         outputs['taylor_test']['initial']['Jtotal'] = taylor_test(fun, dofs, h)
             
         # -------------------------------------------------------------------------------------
         outputs['result'] = minimize(
                 fun, dofs, args=(prob_jacobian, {'Nfeval': 0}), jac=True, method='BFGS', 
                 options={'maxiter': inputs['numerics']['MAXITER_single_stage']}, tol=1e-12
                 )
-        
+        mpi.comm_world.Bcast(dofs, root=0)       
+ 
         res = outputs['result']
         log_print(f"Number of iterations: {res.nit}\n")
         log_print(f"Number of function evaluations: {res.nfev}\n")
@@ -1030,16 +1029,16 @@ with MPIFiniteDifference(Jplasma.J, mpi, diff_method=diff_method, abs_step=finit
         log_print("\n")
         # -------------------------------------------------------------------------------------
         # Taylor test
-        if inputs['numerics']['taylor_test']:
-            log_print('----------------------------------------------\n')
-            log_print('                              FINAL TAYLOR TEST \n')
-            outputs['taylor_test']['final'] = dict()
-            log_print('Running final Taylor test for coils...')
-            outputs['taylor_test']['final']['Jcoils'] = taylor_test(fun_coils, dofs_coils, h1)
-            log_print('Running final Taylor test for plasma...')
-            outputs['taylor_test']['final']['Jplasma'] = taylor_test(fpl, dofs_plasma, h2)
-            log_print('Running final Taylor test for full objective...')
-            outputs['taylor_test']['final']['Jtotal'] = taylor_test(fun, dofs, h)
+       # if inputs['numerics']['taylor_test']:
+       #     log_print('----------------------------------------------\n')
+       #     log_print('                              FINAL TAYLOR TEST \n')
+       #     outputs['taylor_test']['final'] = dict()
+       #     log_print('Running final Taylor test for coils...')
+       #     outputs['taylor_test']['final']['Jcoils'] = taylor_test(fun_coils, dofs_coils, h1)
+       #     log_print('Running final Taylor test for plasma...')
+       #     outputs['taylor_test']['final']['Jplasma'] = taylor_test(fpl, dofs_plasma, h2)
+       #     log_print('Running final Taylor test for full objective...')
+       #     outputs['taylor_test']['final']['Jtotal'] = taylor_test(fun, dofs, h)
         
 # Save output
 if comm_world.rank==0:    

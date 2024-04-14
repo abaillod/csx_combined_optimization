@@ -1,16 +1,16 @@
 &INDATA
-! This file created by simsopt on December 15 2023, 11:08:08
+! This file created by simsopt on April 12 2024, 02:10:17
 
 ! ---- Geometric parameters ----
 NFP = 4
 LASYM = F
 
 ! ---- Resolution parameters ----
-MPOL = 5
-NTOR = 5
-NTHETA = 16
-NZETA = 14
-NS_ARRAY    =     32
+MPOL = 3
+NTOR = 3
+NTHETA = 12
+NZETA = 10
+NS_ARRAY    =     16
 NITER_ARRAY =   2000
 FTOL_ARRAY  =  1e-12
 
@@ -34,9 +34,9 @@ NSTEP = 200
 
 ! ---- Boundary shape. Array index order is (n, m) ----
 RBC(   0,   0) =  1.000000000000000e+00,    ZBS(   0,   0) =  0.000000000000000e+00
-RBC(   1,   0) =  1.344559286161080e-01,    ZBS(   1,   0) =  1.328736200825301e-01
-RBC(  -1,   1) = -7.611882284505966e-02,    ZBS(  -1,   1) =  1.016005753148830e-01
-RBC(   0,   1) =  1.663500070228687e-01,    ZBS(   0,   1) =  1.669633810218688e-01
-RBC(   1,   1) = -1.276350252857538e-02,    ZBS(   1,   1) = -1.827420071341915e-02
+RBC(   1,   0) =  1.344559674021724e-01,    ZBS(   1,   0) =  1.328736337280527e-01
+RBC(  -1,   1) = -7.611873649087421e-02,    ZBS(  -1,   1) =  1.016005813066520e-01
+RBC(   0,   1) =  1.663500817350330e-01,    ZBS(   0,   1) =  1.669633931562144e-01
+RBC(   1,   1) = -1.276344690455198e-02,    ZBS(   1,   1) = -1.827419625823130e-02
 /
 
