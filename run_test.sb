@@ -1,0 +1,15 @@
+#!/bin/sh
+
+for ii in 0 1  
+do 
+	if [ $ii -eq 0 ]
+	then
+		jid=$(sbatch --parsable run_combined_approach_pickle.sb inputs/testing_run/input_${ii}.pckl --picke)
+		echo "Starting job ${jid}"
+	else
+		jid=$(sbatch --parsable --dependency=afterok:$jid run_combined_approach_pickle.sb inputs/testing_run/input_${ii}.pckl)
+		echo "Starting job ${jid}"
+	fi
+done
+
+

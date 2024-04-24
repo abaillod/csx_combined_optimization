@@ -1,0 +1,7 @@
+#!/bin/sh
+
+echo "Diff for M=N=1"
+diff runs/testing_run/M=N=1/log.txt runs/opt_35/M=N=1/log.txt
+
+echo "Diff for M=N=2"
+diff runs/testing_run/M=N=2/log.txt runs/opt_35/M=N=2/log.txt
