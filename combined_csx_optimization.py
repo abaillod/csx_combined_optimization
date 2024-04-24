@@ -825,9 +825,6 @@ if inputs['numerics']['MAXITER_stage_2'] > 0:
         bs_wp.save( os.path.join(coils_results_path, "bs_wp_post_stage_2.json") )
 
 
-x0 = np.copy(np.concatenate((JF.x, vmec.x)))
-dofs = np.concatenate((JF.x, vmec.x))
-
 # =================================================================================================
 # FULL COMBINED OPTIMIZATION
 # --------------------------
@@ -941,6 +938,8 @@ log_print("\n")
 # Define taylor test
 dofs_coils = Jcoils.x
 dofs_plasma = vmec.x
+
+dofs = np.copy(np.concatenate(Jcoils.x,vmec.x))
 
 # Print initial degrees of freedom
 log_print('The initial coils degrees of freedom are:\n')
