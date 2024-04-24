@@ -5,4 +5,14 @@ __pycache__
 *_000_000000
 inputs
 **/*.nc
+**/*.vts
+**/*.vtui
+**/.DS_Store
+**/.ipynb_checkpoints
+**/*_000_*
+**/*.png
+**/threed1*
+**/mercier.*
+**/fort.12
 -f
+simsopt_example/output/
