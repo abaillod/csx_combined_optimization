@@ -983,28 +983,25 @@ diff_method = inputs['numerics']['fndiff_method']
 finite_difference_abs_step = inputs['numerics']['finite_difference_abs_step'] 
 finite_difference_rel_step = inputs['numerics']['finite_difference_rel_step'] 
 with MPIFiniteDifference(Jplasma.J, mpi, diff_method=diff_method, abs_step=finite_difference_abs_step, rel_step=finite_difference_rel_step) as prob_jacobian:
-   # if mpi.proc0_world:
-   #     # Taylor test - coils            
-   #     fpl = lambda x, info: fun_plasma(x, prob_jacobian, info)
-   #     outputs['taylor_test'] = dict()
-   #     outputs['taylor_test']['initial'] = dict()
-   #     outputs['taylor_test']['eps'] = myeps
+    if mpi.proc0_world:
+        # Taylor test - coils            
+        fpl = lambda x, info: fun_plasma(x, prob_jacobian, info)
+        outputs['taylor_test'] = dict()
+        outputs['taylor_test']['initial'] = dict()
+        outputs['taylor_test']['eps'] = myeps
 
-   #     if inputs['numerics']['taylor_test']:
-   #         log_print('-----------------------------------------------------------------\n')
-   #         log_print('                              INITIAL TAYLOR TEST \n')
-   #         log_print('Running initial Taylor test for coils...\n')
-   #         outputs['taylor_test']['initial']['Jcoils'] = taylor_test(fun_coils, dofs_coils, h1)
-   #         log_print('Running initial Taylor test for plasma...\n')
-   #         outputs['taylor_test']['initial']['Jplasma'] = taylor_test(fpl, dofs_plasma, h2)
-   #         log_print('Running initial Taylor test for full objective...\n')
-   #         outputs['taylor_test']['initial']['Jtotal'] = taylor_test(fun, dofs, h)
+        if inputs['numerics']['taylor_test']:
+            log_print('-----------------------------------------------------------------\n')
+            log_print('                              INITIAL TAYLOR TEST \n')
+            log_print('Running initial Taylor test for coils...\n')
+            outputs['taylor_test']['initial']['Jcoils'] = taylor_test(fun_coils, dofs_coils, h1)
+            log_print('Running initial Taylor test for plasma...\n')
+            outputs['taylor_test']['initial']['Jplasma'] = taylor_test(fpl, dofs_plasma, h2)
+            log_print('Running initial Taylor test for full objective...\n')
+            outputs['taylor_test']['initial']['Jtotal'] = taylor_test(fun, dofs, h)
             
         # -------------------------------------------------------------------------------------
-        outputs['result'] = minimize(
-                fun, dofs, args=(prob_jacobian, {'Nfeval': 0}), jac=True, method='BFGS', 
-                options={'maxiter': inputs['numerics']['MAXITER_single_stage']}, tol=1e-12
-                )
+        outputs['result'] = minimize(fun, dofs, args=(prob_jacobian, {'Nfeval': 0}), jac=True, method='BFGS', options={'maxiter': inputs['numerics']['MAXITER_single_stage']}, tol=1e-12)
         mpi.comm_world.Bcast(dofs, root=0)       
  
         res = outputs['result']
@@ -1028,16 +1025,16 @@ with MPIFiniteDifference(Jplasma.J, mpi, diff_method=diff_method, abs_step=finit
         log_print("\n")
         # -------------------------------------------------------------------------------------
         # Taylor test
-       # if inputs['numerics']['taylor_test']:
-       #     log_print('----------------------------------------------\n')
-       #     log_print('                              FINAL TAYLOR TEST \n')
-       #     outputs['taylor_test']['final'] = dict()
-       #     log_print('Running final Taylor test for coils...')
-       #     outputs['taylor_test']['final']['Jcoils'] = taylor_test(fun_coils, dofs_coils, h1)
-       #     log_print('Running final Taylor test for plasma...')
-       #     outputs['taylor_test']['final']['Jplasma'] = taylor_test(fpl, dofs_plasma, h2)
-       #     log_print('Running final Taylor test for full objective...')
-       #     outputs['taylor_test']['final']['Jtotal'] = taylor_test(fun, dofs, h)
+        if inputs['numerics']['taylor_test']:
+            log_print('----------------------------------------------\n')
+            log_print('                              FINAL TAYLOR TEST \n')
+            outputs['taylor_test']['final'] = dict()
+            log_print('Running final Taylor test for coils...')
+            outputs['taylor_test']['final']['Jcoils'] = taylor_test(fun_coils, dofs_coils, h1)
+            log_print('Running final Taylor test for plasma...')
+            outputs['taylor_test']['final']['Jplasma'] = taylor_test(fpl, dofs_plasma, h2)
+            log_print('Running final Taylor test for full objective...')
+            outputs['taylor_test']['final']['Jtotal'] = taylor_test(fun, dofs, h)
         
 # Save output
 if comm_world.rank==0:    
@@ -1048,5 +1045,5 @@ if comm_world.rank==0:
         pickle.dump( outputs, f )
 
     bs.save( os.path.join(coils_results_path, "bs_output.json") )
-    bs_wp.save( os.path.join(coils_results_path, "bs_wp_output.json") )
+    s_wp.save( os.path.join(coils_results_path, "bs_wp_output.json") )
     vmec.write_input(os.path.join(this_path, f'input.final'))
