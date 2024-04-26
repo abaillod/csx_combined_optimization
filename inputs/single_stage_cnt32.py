@@ -73,6 +73,7 @@ inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(1E4)
 
 
 
+
 ## Windowpane coils related inputs
 inputs['wp_coils'] = dict()
 inputs['wp_coils']['geometry'] = dict()

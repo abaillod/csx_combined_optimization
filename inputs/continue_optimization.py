@@ -2,7 +2,7 @@ import pickle
 from simsopt.objectives import Weight
 
 
-fname = '../runs/opt_17/M=N=4/input.pckl'
+fname = '../runs/opt_43/M=N=1/input.pckl'
 with open(fname, 'rb') as f:
     inputs = pickle.load( f )
 
