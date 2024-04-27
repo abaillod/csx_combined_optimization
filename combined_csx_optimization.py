@@ -939,7 +939,7 @@ log_print("\n")
 dofs_coils = Jcoils.x
 dofs_plasma = vmec.x
 
-dofs = np.copy(np.concatenate(Jcoils.x,vmec.x))
+dofs = np.copy(np.concatenate((Jcoils.x,vmec.x)))
 
 # Print initial degrees of freedom
 log_print('The initial coils degrees of freedom are:\n')
@@ -1045,5 +1045,5 @@ if comm_world.rank==0:
         pickle.dump( outputs, f )
 
     bs.save( os.path.join(coils_results_path, "bs_output.json") )
-    s_wp.save( os.path.join(coils_results_path, "bs_wp_output.json") )
+    bs_wp.save( os.path.join(coils_results_path, "bs_wp_output.json") )
     vmec.write_input(os.path.join(this_path, f'input.final'))
