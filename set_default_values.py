@@ -204,7 +204,7 @@ def set_default(inputs):
         inputs['winding']['il_bincurv_weight'] = Weight(0)
     if 'il_twist_max' not in inputs['winding'].keys():
         out = logprint('Setting default value for il_twist_max', out)
-        inputs['winding']['il_bincurv_weight'] = 0.5
+        inputs['winding']['il_twist_max'] = 0.5
     if 'il_twist_weight' not in inputs['winding'].keys():
         out = logprint('Setting default value for il_twist_weight', out)
         inputs['winding']['il_twist_weight'] = Weight(0)
