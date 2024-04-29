@@ -833,6 +833,12 @@ vmec.boundary.fixed_range(
 if not inputs['cnt_coils']['dofs']['R00_free']:
     vmec.boundary.fix('rc(0,0)')
 
+if inputs['winding']['il_tor_weight'].value==0 and inputs['winding']['il_bincurv_weight'].value==0 and inputs['winding']['il_twist_weight']==0:
+    rotation.fix_all()
+else:
+    rotation.unfix_all()
+
+
 # Save initial degrees of freedom
 log_print('The initial coils degrees of freedom are:\n')
 if comm_world.rank == 0: 
@@ -1088,6 +1094,6 @@ if comm_world.rank==0:
         pickle.dump( outputs, f )
 
     bs.save( os.path.join(coils_results_path, "bs_output.json") )
-    bs_wp.save( os.path.join(coils_results_path, "bs_wp_output.json") )
+    s_wp.save( os.path.join(coils_results_path, "bs_wp_output.json") )
     vmec.write_input(os.path.join(this_path, f'input.final'))
     fc.save( os.path.join(coils_results_path, "hts_frame_final.json") )
