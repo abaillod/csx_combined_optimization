@@ -66,9 +66,9 @@ inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(1)
 ## Windowpane coils related inputs
 inputs['wp_coils'] = dict()
 inputs['wp_coils']['geometry'] = dict()
-inputs['wp_coils']['geometry']['filename'] = 'inputs/coil_inputs/windowpanes/wp_set_01.json' # if None, coils are initialized 
+inputs['wp_coils']['geometry']['filename'] = None # if None, coils are initialized 
                                                   # according to inputs below
-inputs['wp_coils']['geometry']['n_base_coils'] = 1 # Number of base coils if giving an input file
+inputs['wp_coils']['geometry']['n_base_coils'] = 0 # Number of base coils if giving an input file
 inputs['wp_coils']['geometry']['ncoil_per_row'] = 0 # total number of wp coils will be 
                                                     # nfp*size(Z0)*ncoil_per_row
 inputs['wp_coils']['geometry']['R0'] = 0.3  # Initial radial position of WP coils

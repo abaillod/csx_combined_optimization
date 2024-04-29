@@ -54,6 +54,10 @@ from simsopt.solve import least_squares_mpi_solve
 from simsopt.objectives import ConstrainedProblem
 from simsopt.solve import constrained_mpi_solve
 from simsopt.util import comm_world
+
+from simsopt.geo.framedcurve import FramedCurveFrenet, FramedCurveCentroid
+from simsopt.geo import FramedCurveTwist, CoilStrain, LPTorsionalStrainPenalty, LPBinormalCurvatureStrainPenalty, FrameRotation
+
 import git
 import argparse
 
@@ -127,7 +131,8 @@ if comm_world.rank == 0:
     os.makedirs(coils_results_path, exist_ok=True)
 
     # Create log file, define function to append to log file
-    repo = git.Repo('/burg/home/ab5667/Github/simsopt', search_parent_directories=True)
+    #repo = git.Repo('/burg/home/ab5667/Github/simsopt', search_parent_directories=True)
+    repo = git.Repo('~/Github/simsopt', search_parent_directories=True)
     sha0 = repo.head.object.hexsha
     
     repo = git.Repo(search_parent_directories=True)
@@ -284,6 +289,17 @@ pf_base_curve.name = 'PF_base_curve'
 pf_base_current = pf_coils[0].current
 pf_base_current.name = 'PF_base_current'
 
+
+# Create curve frame
+rotation = FrameRotation(il_curve.quadpoints, inputs['winding']['rot_order'])
+
+fc_centroid = FramedCurveCentroid(il_curve)
+fc_frenet = FramedCurveFrenet(il_curve)
+fc = FramedCurveCentroid(il_curve,rotation)
+
+twist = FramedCurveTwist(fc)
+cs = CoilStrain(fc, width=inputs['winding']['width'])
+
 # Load or generate windowpane coils
 if inputs['wp_coils']['geometry']['filename'] is None:
     if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
@@ -344,6 +360,7 @@ if comm_world.rank==0:
     surf_to_vtk( os.path.join(coils_results_path, "initial_surface"), bs, surf )
     bs.save( os.path.join(coils_results_path, "bs_initial.json") )
     bs_wp.save( os.path.join(coils_results_path, "bs_wp_initial.json") )
+    fc.save( os.path.join(coils_results_path, "hts_frame_initial.json") )
 
 
 # =================================================================================================
@@ -481,6 +498,16 @@ Jcoils = add_target( Jcoils, LpCurveZ( il_curve, 2, il_curveZ_threshold ), il_cu
 il_arclength_weight = inputs['cnt_coils']['target']['arclength_weight'] 
 Jcoils = add_target( Jcoils, ArclengthVariation( il_curve ), il_arclength_weight )
 
+il_tor_weight = inputs['winding']['il_tor_weight'] 
+Jcoils = add_target( Jcoils, LPTorsionalStrainPenalty(fc, p=2, threshold=inputs['winding']['tor_threshold'], width=inputs['winding']['width']), il_tor_weight )
+
+il_bincurv_weight = inputs['winding']['il_bincurv_weight'] 
+Jcoils = add_target( Jcoils, LPBinormalCurvatureStrainPenalty(fc, p=2, threshold=inputs['winding']['cur_threshold'], width=inputs['winding']['width']), il_bincurv_weight )
+
+il_twist_weight = inputs['winding']['il_twist_weight']
+Jcoils = add_target( Jcoils, QuadraticPenalty(twist,inputs['winding']['il_twist_max'],'max'), il_twist_weight )
+
+
 # WP penalties
 if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
     wp_lengths = [CurveLength( c ) for c in wp_base_curves]
@@ -552,6 +579,7 @@ def fun_coils(dofs, info):
         outstr += f", C-S-Sep={Jcsdist.shortest_distance():.2f}"
         outstr += f"IL length={il_length.J():.2f},  IL ∫ϰ²/L={il_msc.J():.2f},  IL ∫max(ϰ-ϰ0,0)^2={il_curvature.J():.2f}\n"
         outstr += f"Vessel penalty is {VP:.2E}\n"
+        outstr += f"HTS:: torsional strain={np.max(cs.torsional_strain()):.2E}, curvature strain={np.max(cs.binormal_curvature_strain()):.2E}, frame twist={twist.J():.2E}\n"
         if inputs['wp_coils']['geometry']['ncoil_per_row'] > 0:
             for i, (l, msc, jcs) in enumerate(zip(wp_lengths, wp_msc, wp_curvatures)):
                 outstr += f"WP_{i:d} length={l.J():.2f},  WP_{i:d} ∫ϰ²/L={msc.J():.2f},  WP_{i:d} ∫max(ϰ-ϰ0,0)^2={jcs.J():.2f}\n" 
@@ -591,6 +619,9 @@ outputs['vmec'] = dict()
 outputs['vmec']['fsqr'] = []        # Force balance error in VMEC, radial direction ?
 outputs['vmec']['fsqz'] = []        # Force balance error in VMEC, vertical direction ?
 outputs['vmec']['fsql'] = []        # Force balance error in VMEC, ??? direction ?
+outputs['torsional_strain'] = []
+outputs['curvature_strain'] = []
+outputs['frame_twist'] = []
 
 
 def set_dofs(x0):
@@ -665,6 +696,9 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
             outputs['WP_max_curvature'].append([np.nan for c in wp_curvatures])
         outputs['IL_msc'].append(np.nan)
         outputs['IL_max_curvature'].append(np.nan)
+        outputs['torsional_strain'].append(np.nan)
+        outputs['curvature_strain'].append(np.nan)
+        outputs['frame_twist'].append(np.nan)
 
     else:
         # Evaluate important metrics    
@@ -702,6 +736,9 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
             outputs['WP_max_curvature'].append([float(c.J()) for c in wp_curvatures])
         outputs['IL_msc'].append(float(il_msc.J()))
         outputs['IL_max_curvature'].append(float(il_curvature.J()))
+        outputs['torsional_strain'].append(cs.torsional_strain())
+        outputs['curvature_strain'].append(cs.binormal_curvature_strain())
+        outputs['frame_twist'].append(twist.J())
 
    
         # Log output
@@ -715,6 +752,9 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         outstr += f", C-S-Sep={outputs['min_CS'][-1]:.5E}"
         outstr += f", IL length={outputs['IL_length'][-1]:.5E},  IL ∫ϰ²/L={outputs['IL_msc'][-1]:.5E},  IL ∫max(ϰ-ϰ0,0)^2={outputs['IL_max_curvature'][-1]:.5E}\n"
         outstr += f"Vessel penalty is {outputs['vessel_penalty'][-1]:.2E}\n"
+        outstr += f"HTS:: torsional strain={np.max(outputs['torsional_strain'][-1]):.2E}, "
+        outstr += f"curvature strain={np.max(outputs['curvature_strain'][-1]):.2E}, "
+        outstr += f"frame twist={outputs['frame_twist'][-1]}\n"
         if len(wp_base_curves)>0:
             for i, (l, msc, jcs) in enumerate(zip(outputs['WP_length'][-1], outputs['WP_msc'][-1], outputs['WP_max_curvature'][-1])):
                 outstr += f"WP_{i:d} length={l:.5E}, msc={msc:.5E}, max(c,0)^2={jcs:.5E}\n"
@@ -823,6 +863,7 @@ if inputs['numerics']['MAXITER_stage_2'] > 0:
         surf_to_vtk( os.path.join(coils_results_path, "surf_post_stage_2"), bs, surf )
         bs.save( os.path.join(coils_results_path, "bs_post_stage_2.json") )
         bs_wp.save( os.path.join(coils_results_path, "bs_wp_post_stage_2.json") )
+        fc.save( os.path.join(coils_results_path, "hts_frame_post_stage_2.json") )
 
 
 # =================================================================================================
@@ -939,7 +980,7 @@ log_print("\n")
 dofs_coils = Jcoils.x
 dofs_plasma = vmec.x
 
-dofs = np.copy(np.concatenate(Jcoils.x,vmec.x))
+dofs = np.copy(np.concatenate((Jcoils.x,vmec.x)))
 
 # Print initial degrees of freedom
 log_print('The initial coils degrees of freedom are:\n')
@@ -1001,9 +1042,8 @@ with MPIFiniteDifference(Jplasma.J, mpi, diff_method=diff_method, abs_step=finit
             outputs['taylor_test']['initial']['Jtotal'] = taylor_test(fun, dofs, h)
             
         # -------------------------------------------------------------------------------------
-        outputs['result'] = minimize(fun, dofs, args=(prob_jacobian, {'Nfeval': 0}), jac=True, method='BFGS', options={'maxiter': inputs['numerics']['MAXITER_single_stage']}, tol=1e-12)
-        mpi.comm_world.Bcast(dofs, root=0)       
- 
+        outputs['result'] = minimize(fun, dofs, args=(prob_jacobian, {'Nfeval': 0}), jac=True, method='BFGS', options={'maxiter': inputs['numerics']['MAXITER_single_stage']}, tol=1e-12)    
+
         res = outputs['result']
         log_print(f"Number of iterations: {res.nit}\n")
         log_print(f"Number of function evaluations: {res.nfev}\n")
@@ -1023,6 +1063,7 @@ with MPIFiniteDifference(Jplasma.J, mpi, diff_method=diff_method, abs_step=finit
         for j, coil in enumerate(base_coils):
             log_print(f"Current for coil {j}: {coil.current.get_value()}\n")
         log_print("\n")
+        
         # -------------------------------------------------------------------------------------
         # Taylor test
         if inputs['numerics']['taylor_test']:
@@ -1035,6 +1076,8 @@ with MPIFiniteDifference(Jplasma.J, mpi, diff_method=diff_method, abs_step=finit
             outputs['taylor_test']['final']['Jplasma'] = taylor_test(fpl, dofs_plasma, h2)
             log_print('Running final Taylor test for full objective...')
             outputs['taylor_test']['final']['Jtotal'] = taylor_test(fun, dofs, h)
+
+mpi.comm_world.Bcast(dofs, root=0)   
         
 # Save output
 if comm_world.rank==0:    
@@ -1047,3 +1090,4 @@ if comm_world.rank==0:
     bs.save( os.path.join(coils_results_path, "bs_output.json") )
     s_wp.save( os.path.join(coils_results_path, "bs_wp_output.json") )
     vmec.write_input(os.path.join(this_path, f'input.final'))
+    fc.save( os.path.join(coils_results_path, "hts_frame_final.json") )

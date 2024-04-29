@@ -180,6 +180,35 @@ def set_default(inputs):
         out = logprint('Setting default value for arc length weight', out)
         inputs['cnt_coils']['target']['arclength_weight'] = Weight(0)
 
+
+    # Winding angle
+    if 'winding' not in inputs.keys():
+        inputs['winding'] = dict()
+    if 'rot_order' not in inputs['winding'].keys():
+        out = logprint('Setting default value for winding angle rotation order', out)
+        inputs['winding']['rot_order'] = 10
+    if 'width' not in inputs['winding'].keys():
+        out = logprint('Setting default value for HTS tape width', out)
+        inputs['winding']['width'] = 4e-3
+    if 'tor_threshold' not in inputs['winding'].keys():
+        out = logprint('Setting default value for tor_threshold', out)
+        inputs['winding']['tor_threshold'] = 1e-3
+    if 'cur_threshold' not in inputs['winding'].keys():
+        out = logprint('Setting default value for cur_threshold', out)
+        inputs['winding']['cur_threshold'] = 1e-3
+    if 'il_tor_weight' not in inputs['winding'].keys():
+        out = logprint('Setting default value for il_tor_weight', out)
+        inputs['winding']['il_tor_weight'] = Weight(0)
+    if 'il_bincurv_weight' not in inputs['winding'].keys():
+        out = logprint('Setting default value for il_bincurv_weight', out)
+        inputs['winding']['il_bincurv_weight'] = Weight(0)
+    if 'il_twist_max' not in inputs['winding'].keys():
+        out = logprint('Setting default value for il_twist_max', out)
+        inputs['winding']['il_bincurv_weight'] = 0.5
+    if 'il_twist_weight' not in inputs['winding'].keys():
+        out = logprint('Setting default value for il_twist_weight', out)
+        inputs['winding']['il_twist_weight'] = Weight(0)
+
         
     ## Windowpane coils related inputs
     if 'wp_coils' not in inputs.keys():
