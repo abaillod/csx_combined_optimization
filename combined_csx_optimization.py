@@ -1094,6 +1094,6 @@ if comm_world.rank==0:
         pickle.dump( outputs, f )
 
     bs.save( os.path.join(coils_results_path, "bs_output.json") )
-    s_wp.save( os.path.join(coils_results_path, "bs_wp_output.json") )
+    bs_wp.save( os.path.join(coils_results_path, "bs_wp_output.json") )
     vmec.write_input(os.path.join(this_path, f'input.final'))
     fc.save( os.path.join(coils_results_path, "hts_frame_final.json") )
