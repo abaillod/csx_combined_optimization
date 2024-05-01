@@ -61,7 +61,8 @@ inputs['cnt_coils']['target']['IL_maxc_weight'] = Weight(1)      # Weight on IL 
 inputs['cnt_coils']['target']['PF_current_threshold'] = 1E+9     # Maximum PF current value
 inputs['cnt_coils']['target']['PF_current_weight'] = Weight(1)   # Weight on PF current penalty
 inputs['cnt_coils']['target']['IL_vessel_threshold'] = 0.05
-inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(1)
+inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(1E-2)
+inputs['cnt_coils']['target']['IL_vessel_weight_iteration'] = True
 
 ## Windowpane coils related inputs
 inputs['wp_coils'] = dict()

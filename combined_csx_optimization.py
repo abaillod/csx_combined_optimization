@@ -590,6 +590,95 @@ def fun_coils(dofs, info):
     return J, grad
 
 
+# Define QS metric. Here we target QS (M=1, N=0)
+qs = QuasisymmetryRatioResidual(
+        vmec, inputs['vmec']['target']['qa_surface'], helicity_m=1, helicity_n=0, 
+        ntheta=inputs['vmec']['target']['qa_ntheta'], nphi=inputs['vmec']['target']['qa_nphi']
+)
+
+class remake_iota(Optimizable):
+    """ Penalty function for the mean value of iota. 
+
+    This is useful to use the QuadraticPenalty function of simsopt.
+
+    Args:
+        - vmec: simsopt.mhd.Vmec instance
+    """
+    def __init__(self, vmec):
+        self.vmec = vmec
+        super().__init__(depends_on=[vmec])
+    def J(self):
+        try:
+            return self.vmec.mean_iota()
+        except ObjectiveFailure: 
+            log_print(f"Error evaluating iota! ")
+            return np.nan
+
+class remake_aspect(Optimizable):
+    """ Penalty function for the aspect ratio. 
+
+    This is useful to use the QuadraticPenalty function of simsopt.
+
+    Args:
+        - vmec: simsopt.mhd.Vmec instance
+    """
+    def __init__(self, vmec):
+        self.vmec = vmec
+        super().__init__(depends_on=[vmec])
+    def J(self):
+        "returns value of quantity"
+        try: 
+            return self.vmec.aspect()
+        except ObjectiveFailure: 
+            log_print(f"Error evaluating aspect ratio! ")
+            return np.nan
+
+class quasisymmetry(Optimizable):
+    def __init__(self, qs):
+        self.qs = qs  
+        super().__init__(depends_on=[qs])
+    def J(self):
+        "returns value of quantity" 
+        try:
+            return self.qs.total()
+        except ObjectiveFailure: 
+            with open(os.path.join(this_path, 'log.txt'), 'a') as f:
+                f.write(f"Error evaluating QS! ")
+            return np.nan
+
+class volume(Optimizable):
+    def __init__(self, surf):
+        self.surf = surf
+        super().__init__(depends_on=[surf])
+    def J(self):
+        try:
+            return self.surf.volume()
+        except ObjectiveFailure:
+            with open(os.path.join(this_path, 'log.txt'), 'a') as f:
+                f.write(f"Error evaluating Volume! ")
+            return np.nan
+            
+
+
+J_iota = inputs['vmec']['target']['iota_weight'] * QuadraticPenalty(remake_iota(vmec), inputs['vmec']['target']['iota'], inputs['vmec']['target']['iota_constraint_type'])
+J_aspect = inputs['vmec']['target']['aspect_ratio_weight'] * QuadraticPenalty(remake_aspect(vmec), inputs['vmec']['target']['aspect_ratio'], inputs['vmec']['target']['aspect_ratio_constraint_type'])
+J_qs = QuadraticPenalty(quasisymmetry(qs), 0, 'identity') 
+J_volume =  inputs['vmec']['target']['volume_weight'] * QuadraticPenalty( volume( surf ),  inputs['vmec']['target']['volume'],  inputs['vmec']['target']['volume_constraint_type'] )
+
+
+Jplasma = J_qs
+# Only add targets with non-zero weight.
+if inputs['vmec']['target']['iota_weight'].value>0:
+    Jplasma += J_iota
+if inputs['vmec']['target']['aspect_ratio_weight'].value>0:
+    Jplasma += J_aspect
+if inputs['vmec']['target']['volume_weight'].value>0:
+    Jplasma += J_volume
+
+
+
+
+
 # We now include both the coil penalty and the plasma target functions
 outputs = dict()
 outputs['J'] = []                   # Full target function
@@ -858,7 +947,7 @@ x0 = np.copy(dofs) # Make a copy of dofs for weight iterations
 ndof_vmec = int(len(vmec.boundary.x))
 
 # Coil weight iteration
-if inputs['numerics']['MAXITER_weight_iteration']>0:
+if inputs['numerics']['number_weight_iteration_stage_II']>0:
     satisfied = False
     counter = 0
     factor = inputs['numerics']['weight_iteration_factor']
@@ -866,12 +955,18 @@ if inputs['numerics']['MAXITER_weight_iteration']>0:
     
     # Print in log
     log_print("Starting iteration on penalty weights... \n\n")
-    while not satisfied and counter<inputs['numerics']['MAXITER_weight_iteration']:
+    while not satisfied and counter<inputs['numerics']['number_weight_iteration_stage_II']:
         counter += 1
         log_print(f"Weight iteration #{counter}...\n")
         
         # Re-initialize dofs
         set_dofs( x0 )
+        dofs = np.concatenate((Jcoils.x, vmec.x))
+  
+        # Run quick stage II
+        options={'maxiter': inputs['numerics']['MAXITER_weight_iteration_stage_II'], 'maxcor': 300}
+        res = minimize(fun_coils, dofs[:-ndof_vmec], jac=True, method='L-BFGS-B', args=({'Nfeval': 0}), options=options, tol=1e-12)
+        
     
         # Set satisfied to True; only False if one constraint is not satisfied
         satisfied = True
@@ -998,96 +1093,6 @@ if inputs['numerics']['MAXITER_single_stage'] == 0:
     sys.exit()
 
 
-# Define QS metric. Here we target QS (M=1, N=0)
-qs = QuasisymmetryRatioResidual(
-        vmec, inputs['vmec']['target']['qa_surface'], helicity_m=1, helicity_n=0, 
-        ntheta=inputs['vmec']['target']['qa_ntheta'], nphi=inputs['vmec']['target']['qa_nphi']
-)
-
-class remake_iota(Optimizable):
-    """ Penalty function for the mean value of iota. 
-
-    This is useful to use the QuadraticPenalty function of simsopt.
-
-    Args:
-        - vmec: simsopt.mhd.Vmec instance
-    """
-    def __init__(self, vmec):
-        self.vmec = vmec
-        super().__init__(depends_on=[vmec])
-    def J(self):
-        try:
-            return self.vmec.mean_iota()
-        except ObjectiveFailure: 
-            log_print(f"Error evaluating iota! ")
-            return np.nan
-
-class remake_aspect(Optimizable):
-    """ Penalty function for the aspect ratio. 
-
-    This is useful to use the QuadraticPenalty function of simsopt.
-
-    Args:
-        - vmec: simsopt.mhd.Vmec instance
-    """
-    def __init__(self, vmec):
-        self.vmec = vmec
-        super().__init__(depends_on=[vmec])
-    def J(self):
-        "returns value of quantity"
-        try: 
-            return self.vmec.aspect()
-        except ObjectiveFailure: 
-            log_print(f"Error evaluating aspect ratio! ")
-            return np.nan
-
-class quasisymmetry(Optimizable):
-    def __init__(self, qs):
-        self.qs = qs  
-        super().__init__(depends_on=[qs])
-    def J(self):
-        "returns value of quantity" 
-        try:
-            return self.qs.total()
-        except ObjectiveFailure: 
-            with open(os.path.join(this_path, 'log.txt'), 'a') as f:
-                f.write(f"Error evaluating QS! ")
-            return np.nan
-
-class volume(Optimizable):
-    def __init__(self, surf):
-        self.surf = surf
-        super().__init__(depends_on=[surf])
-    def J(self):
-        try:
-            return self.surf.volume()
-        except ObjectiveFailure:
-            with open(os.path.join(this_path, 'log.txt'), 'a') as f:
-                f.write(f"Error evaluating Volume! ")
-            return np.nan
-            
-
-
-J_iota = inputs['vmec']['target']['iota_weight'] * QuadraticPenalty(remake_iota(vmec), inputs['vmec']['target']['iota'], inputs['vmec']['target']['iota_constraint_type'])
-J_aspect = inputs['vmec']['target']['aspect_ratio_weight'] * QuadraticPenalty(remake_aspect(vmec), inputs['vmec']['target']['aspect_ratio'], inputs['vmec']['target']['aspect_ratio_constraint_type'])
-J_qs = QuadraticPenalty(quasisymmetry(qs), 0, 'identity') 
-J_volume =  inputs['vmec']['target']['volume_weight'] * QuadraticPenalty( volume( surf ),  inputs['vmec']['target']['volume'],  inputs['vmec']['target']['volume_constraint_type'] )
-
-
-Jplasma = J_qs
-# Only add targets with non-zero weight.
-if inputs['vmec']['target']['iota_weight'].value>0:
-    Jplasma += J_iota
-if inputs['vmec']['target']['aspect_ratio_weight'].value>0:
-    Jplasma += J_aspect
-if inputs['vmec']['target']['volume_weight'].value>0:
-    Jplasma += J_volume
-
-
-
-
-
-
 # Write initial target values
 log_print("=====================================================================\n Starting single stage optimization ...\n")
 log_print(f"Aspect ratio before optimization: {vmec.aspect()}\n")
@@ -1118,7 +1123,7 @@ if comm_world.rank == 0:
 
 
 # Iterate on weights
-if inputs['numerics']['MAXITER_weight_iteration']>0:
+if inputs['numerics']['number_weight_iteration_single_stage']>0:
     satisfied = False
     counter = 0
     factor = inputs['numerics']['weight_iteration_factor']
@@ -1126,12 +1131,17 @@ if inputs['numerics']['MAXITER_weight_iteration']>0:
     
     # Print in log
     log_print("Starting iteration on penalty weights... \n\n")
-    while not satisfied and counter<inputs['numerics']['MAXITER_weight_iteration']:
+    while not satisfied and counter<inputs['numerics']['number_weight_iteration_single_stage']:
         counter += 1
         log_print(f"Weight iteration #{counter}...\n")
         
         # Re-initialize dofs
         set_dofs( x0 )
+        dofs = np.concatenate((Jcoils.x, vmec.x))
+  
+        # Run quick stage II
+        options={'maxiter': inputs['numerics']['MAXITER_weight_iteration_single_stage'], 'maxcor': 300}
+        res = minimize(fun_coils, dofs[:-ndof_vmec], jac=True, method='L-BFGS-B', args=({'Nfeval': 0}), options=options, tol=1e-12)
         
         # Set satisfied to True; only False if one constraint is not satisfied
         satisfied = True
@@ -1266,6 +1276,6 @@ if comm_world.rank==0:
         pickle.dump( outputs, f )
 
     bs.save( os.path.join(coils_results_path, "bs_output.json") )
-    s_wp.save( os.path.join(coils_results_path, "bs_wp_output.json") )
+    bs_wp.save( os.path.join(coils_results_path, "bs_wp_output.json") )
     vmec.write_input(os.path.join(this_path, f'input.final'))
     fc.save( os.path.join(coils_results_path, "hts_frame_final.json") )

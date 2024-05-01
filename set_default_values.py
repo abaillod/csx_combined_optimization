@@ -326,9 +326,19 @@ def set_default(inputs):
     if 'weight_margin' not in inputs['numerics'].keys():
         out = logprint('Setting default value for numerics weight_margin', out)
         inputs['numerics']['weight_margin'] = 0.1 # NUmber of iteration for initial stage two optimization
-    if 'MAXITER_weight_iteration' not in inputs['numerics'].keys():
-        out = logprint('Setting default value for numerics MAXITER_weight_iteration', out)
-        inputs['numerics']['MAXITER_weight_iteration'] = 100 # NUmber of iteration for initial stage two optimization
+    if 'MAXITER_weight_iteration_stage_II' not in inputs['numerics'].keys():
+        out = logprint('Setting default value for numerics MAXITER_weight_iteration_stage_II', out)
+        inputs['numerics']['MAXITER_weight_iteration_stage_II'] = 100 # NUmber of iteration for initial stage two optimization
+    if 'MAXITER_weight_iteration_single_stage' not in inputs['numerics'].keys():
+        out = logprint('Setting default value for numerics MAXITER_weight_iteration_single_stage', out)
+        inputs['numerics']['MAXITER_weight_iteration_single_stage'] = 20 # NUmber of iteration for initial stage two optimization
+    if 'number_weight_iteration_stage_II' not in inputs['numerics'].keys():
+        out = logprint('Setting default value for numerics number_weight_iteration_stage_II', out)
+        inputs['numerics']['number_weight_iteration_stage_II'] = 100 # NUmber of iteration for initial stage two optimization
+    if 'number_weight_iteration_single_stage' not in inputs['numerics'].keys():
+        out = logprint('Setting default value for numerics number_weight_iteration_single_stage', out)
+        inputs['numerics']['number_weight_iteration_single_stage'] = 0 # NUmber of iteration for initial stage two optimization
+        
     if 'MAXITER_stage_2' not in inputs['numerics'].keys():
         out = logprint('Setting default value for numerics MAXITER_stage_2', out)
         inputs['numerics']['MAXITER_stage_2'] = 10 # NUmber of iteration for initial stage two optimization
