@@ -226,6 +226,18 @@ def ws_distance_pure(gammac, lc, surface, minimum_distance):
         * jnp.linalg.norm(ns, axis=1)[None, :]
     return jnp.mean(integralweight * jnp.maximum(minimum_distance-dists, 0)**2)
 
+
+def minimum_distance(gammac, surface):
+    """
+    This function returns the minimum distance between a curve and a surface
+    """
+    ns = surface.normal().reshape((-1, 3))
+    gammas = surface.gamma().reshape((-1,3))
+    
+    dists = jnp.sqrt(jnp.sum(
+        (gammac[:, None, :] - gammas[None, :, :])**2, axis=2))
+    return np.min(dists)
+
 class VesselConstraint(Optimizable):
     r"""Used to constrain coils to remain on a surface
     
@@ -253,6 +265,14 @@ class VesselConstraint(Optimizable):
         
         super().__init__(depends_on=curves)    
 
+    def minimum_distances(self):
+        res = []
+        for c in self.curves:
+            gammac = c.gamma()
+            res.append(minimum_distance(gammac, self.surface))
+
+        return res
+    
     def J(self):
         """
         This returns the value of the quantity.

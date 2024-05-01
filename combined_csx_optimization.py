@@ -854,11 +854,127 @@ if comm_world.rank == 0:
 
 
 dofs = np.concatenate((Jcoils.x, vmec.x))
+x0 = np.copy(dofs) # Make a copy of dofs for weight iterations
 ndof_vmec = int(len(vmec.boundary.x))
+
+# Coil weight iteration
+if inputs['numerics']['MAXITER_weight_iteration']>0:
+    satisfied = False
+    counter = 0
+    factor = inputs['numerics']['weight_iteration_factor']
+    margin = inputs['numerics']['weight_margin']
+    
+    # Print in log
+    log_print("Starting iteration on penalty weights... \n\n")
+    while not satisfied and counter<inputs['numerics']['MAXITER_weight_iteration']:
+        counter += 1
+        log_print(f"Weight iteration #{counter}...\n")
+        
+        # Re-initialize dofs
+        set_dofs( x0 )
+    
+        # Set satisfied to True; only False if one constraint is not satisfied
+        satisfied = True
+        
+        # Evaluate targets and modify weights
+        if inputs['CS_WEIGHT_iteration']:
+            csdist = Jcsdist.shortest_distance()
+            if csdist < (1-margin) * inputs['CS_THRESHOLD']:
+                inputs['CS_WEIGHT'] *= factor
+                satisfied = False
+                log_print(f'CS shortest distance is {csdist:.2E}. Increasing weight...\n')
+
+        if inputs['CC_WEIGHT_iteration']:
+            ccdist = Jccdist.shortest_distance()
+            if ccdist < (1-margin) * inputs['CC_THRESHOLD']:
+                inputs['CS_WEIGHT'] *= factor
+                satisfied = False
+                log_print(f'CS shortest distance is {ccdist:.2E}. Increasing weight...\n')
+
+        
+        if inputs['cnt_coils']['target']['IL_length_weight_iteration']:
+            ll = il_length.J()
+            if ll > (1+margin) * il_length_target:
+                il_length_weight *= facotr
+                satisfied = False
+                log_print(f'IL length is {ll:.2E}. Increasing weight...\n')
+
+        if inputs['cnt_coils']['target']['IL_msc_weight_iteration']:
+            msc = il_msc.J()
+            if msc > (1+margin) * il_msc_threshold:
+                il_msc_weight *= factor
+                satisfied = False
+                log_print(f'IL mean sqaure curvature is {msc:.2E}. Increasing weight...\n')
+
+
+        if inputs['cnt_coils']['target']['IL_maxc_weight_iteration']:
+            maxc = np.max(il_curve.kappa())
+            if maxc > (1+margin) * il_curvature_threshold:
+                il_curvature_weight *= factor
+                satisfied = False
+                log_print(f'IL max curvature is {maxc:.2E}. Increasing weight...\n')
+
+
+        if inputs['cnt_coils']['target']['IL_maxR_weight_iteration']:
+            g = il_curve.gamma()
+            maxr = np.max(np.sqrt(g[:,1]**2 + g[:,2]**2))
+            if maxr > (1+margin) * il_curveR_threshold:
+                il_curveR_weight *= factor
+                satisfied = False
+                log_print(f'IL max R is {maxr:.2E}. Increasing weight...\n')
+                
+        if inputs['cnt_coils']['target']['IL_maxZ_weight_iteration']:
+            g = il_curve.gamma()
+            maxz = np.max(np.abs(g[:,0]))
+            if maxz > (1+margin) * il_curveZ_threshold:
+                il_curveZ_weight *= factor
+                satisfied = False
+                log_print(f'IL max Z is {maxz:.2E}. Increasing weight...\n')
+
+        if inputs['cnt_coils']['target']['IL_vessel_weight_iteration']:
+            min_coil_vessel_distance = vpenalty.minimum_distances()[0]
+            if min_coil_vessel_distance < (1-margin) * il_vessel_threshold:
+                il_vessel_weight *= factor
+                satisfied = False
+                log_print(f'IL min distance to vessel is {min_coil_vessel_distance:.2E}. Increasing weight...\n')
+
+        if inputs['winding']['il_tor_weight_iteration']:
+            torsional_strain = fc.torsional_strain()
+            if torsional_strain > (1+margin)*inputs['winding']['tor_threshold']:
+                il_tor_weight *= factor
+                satisfied = False
+                log_print(f'Torsional strain is {torsional_strain:.2E}. Increasing weight...\n')
+
+        if inputs['winding']['il_bincurv_weight_iteration']:
+            binormal_curvature_strain = fc.binormal_curvature_strain()
+            if binormal_curvature_strain > (1+margin) * inputs['winding']['cur_threshold']:
+                il_bincurv_weight *= factor
+                satisfied = False
+                log_print(f'Binormal curvature strain is {binormal_curvature_strain:.2E}. Increasing weight...\n')
+
+
+        if inputs['winding']['il_twist_weight_iteration']:
+            tw = twist.J()
+            if tw > (1+margin) * inputs['winding']['il_twist_max']:
+                il_twist_weight *= factor
+                satisfied = False
+                log_print(f'Twist penalty is {tw:.2E}. Increasing weight...\n')
+
+
+        if satisfied:
+            log_print('All penalties are satisfied! Saving weights...\n')
+
+            if comm_world.rank == 0: 
+                with open(os.path.join(this_path, 'input_updated_weights.pckl'), 'wb') as f:
+                    pickle.dump(inputs, f)
+
+
+        log_print('\n')
+        
 
 # Run the stage II optimization
 if inputs['numerics']['MAXITER_stage_2'] > 0:
-    # Save coils and surface post stage-two
+    log_print('Starting stage II optimization...')
     
     # Run minimization
     options={'maxiter': inputs['numerics']['MAXITER_stage_2'], 'maxcor': 300}
@@ -987,6 +1103,8 @@ dofs_coils = Jcoils.x
 dofs_plasma = vmec.x
 
 dofs = np.copy(np.concatenate((Jcoils.x,vmec.x)))
+x0 = np.copy(dofs) # Save dofs for weight iterations
+
 
 # Print initial degrees of freedom
 log_print('The initial coils degrees of freedom are:\n')
@@ -997,6 +1115,60 @@ if comm_world.rank == 0:
     for name, dof in zip(vmec.dof_names, vmec.x):
         log_print(f"{name}={dof:.2e}\n")
     log_print("\n")
+
+
+# Iterate on weights
+if inputs['numerics']['MAXITER_weight_iteration']>0:
+    satisfied = False
+    counter = 0
+    factor = inputs['numerics']['weight_iteration_factor']
+    margin = inputs['numerics']['weight_margin']
+    
+    # Print in log
+    log_print("Starting iteration on penalty weights... \n\n")
+    while not satisfied and counter<inputs['numerics']['MAXITER_weight_iteration']:
+        counter += 1
+        log_print(f"Weight iteration #{counter}...\n")
+        
+        # Re-initialize dofs
+        set_dofs( x0 )
+        
+        # Set satisfied to True; only False if one constraint is not satisfied
+        satisfied = True
+
+        if inputs['vmec']['target']['aspect_ratio_weight_iteration']:
+            a = vmec.aspect()
+            if a > inputs['vmec']['target']['aspect_ratio'] * (1+margin):
+                inputs['vmec']['target']['aspect_ratio_weight'] *= factor
+                satisfied = False
+                log_print(f"Aspect ratio is {a:.2E}, increasing weights...\n")
+
+        
+        if inputs['vmec']['target']['iota_weight_iteration']:
+            mean_iota = vmec.mean_iota()
+            if mean_iota < inputs['vmec']['target']['iota'] * (margin+1):
+                inputs['vmec']['target']['iota_weight'] *= factor
+                satisfied = False
+                log_print(f"Mean iota is {mean_iota:.2E}, increasing weights...\n")
+
+
+        if inputs['vmec']['target']['volume_weight_iteration']:
+            volume = vmec.volume()
+            if volume < inputs['vmec']['target']['volume'] * (1+margin):
+                inputs['vmec']['target']['volume_weight'] *= factor
+                satisfied = False
+                log_print(f"Volume is {volume:.2E}, increasing weights...\n")
+                
+        if satisfied:
+            log_print('All penalties are satisfied! Saving weights...\n')
+
+            if comm_world.rank == 0: 
+                with open(os.path.join(this_path, 'input_updated_weights_2.pckl'), 'wb') as f:
+                    pickle.dump(inputs, f)
+
+
+        log_print('\n')                
+
 
 myeps = [1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7]
 if inputs['numerics']['taylor_test']:
@@ -1094,6 +1266,6 @@ if comm_world.rank==0:
         pickle.dump( outputs, f )
 
     bs.save( os.path.join(coils_results_path, "bs_output.json") )
-    bs_wp.save( os.path.join(coils_results_path, "bs_wp_output.json") )
+    s_wp.save( os.path.join(coils_results_path, "bs_wp_output.json") )
     vmec.write_input(os.path.join(this_path, f'input.final'))
     fc.save( os.path.join(coils_results_path, "hts_frame_final.json") )

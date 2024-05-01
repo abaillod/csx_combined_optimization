@@ -17,12 +17,18 @@ def set_default(inputs):
     if 'CS_WEIGHT' not in inputs.keys():
         out = logprint('Setting default value for CS_WEIGHT', out)
         inputs['CS_WEIGHT'] = Weight(0)
+    if 'CS_WEIGHT_iteration' not in inputs.keys():
+        out = logprint('Setting default value for CS_WEIGHT_iteration', out)
+        inputs['CS_WEIGHT_iteration'] = False
     if 'CC_THRESHOLD' not in inputs.keys():
         out = logprint('Setting default value for CC_THRESHOLD', out)
         inputs['CC_THRESHOLD'] = 0
     if 'CC_WEIGHT' not in inputs.keys():
         out = logprint('Setting default value for CC_WEIGHT', out)
         inputs['CC_WEIGHT'] = Weight(0)
+    if 'CC_WEIGHT_iteration' not in inputs.keys():
+        out = logprint('Setting default value for CC_WEIGHT_iteration', out)
+        inputs['CC_WEIGHT_iteration'] = False
     if 'directory' not in inputs.keys():
         raise ValueError('No specified directory!')
 
@@ -73,6 +79,9 @@ def set_default(inputs):
     if 'aspect_ratio_weight' not in inputs['vmec']['target'].keys():
         out = logprint('Setting default value for vmec target aspect_ratio_weight', out)
         inputs['vmec']['target']['aspect_ratio_weight'] = Weight(0) 
+    if 'aspect_ratio_weight_iteration' not in inputs['vmec']['target'].keys():
+        out = logprint('Setting default value for vmec target aspect_ratio_weight_iteration', out)
+        inputs['vmec']['target']['aspect_ratio_weight_iteration'] = False
     if 'aspect_ratio_constraint_type' not in inputs['vmec']['target'].keys():
         out = logprint('Setting default value for vmec target aspect_ratio_constraint_type', out)
         inputs['vmec']['target']['aspect_ratio_constraint_type'] = 'identity'
@@ -82,6 +91,9 @@ def set_default(inputs):
     if 'iota_weight' not in inputs['vmec']['target'].keys():
         out = logprint('Setting default value for vmec target iota_weight', out)
         inputs['vmec']['target']['iota_weight'] = Weight(0) 
+    if 'iota_weight_iteration' not in inputs['vmec']['target'].keys():
+        out = logprint('Setting default value for vmec target iota_weight', out)
+        inputs['vmec']['target']['iota_weight_iteration'] = False
     if 'iota_constraint_type' not in inputs['vmec']['target'].keys():
         out = logprint('Setting default value for vmec target iota_constraint_type', out)
         inputs['vmec']['target']['iota_constraint_type'] = 'identity'
@@ -100,6 +112,9 @@ def set_default(inputs):
     if 'volume_weight' not in inputs['vmec']['target'].keys():
         out = logprint('Setting default value for vmec volume weight', out)
         inputs['vmec']['target']['volume_weight'] = Weight(0)
+    if 'volume_weight_iteration' not in inputs['vmec']['target'].keys():
+        out = logprint('Setting default value for vmec volume weight iteration', out)
+        inputs['vmec']['target']['volume_weight_iteration'] = False
     if 'volume_constraint_type' not in inputs['vmec']['target'].keys():
         out = logprint('Setting default value for vmec volume_constraint_type', out)
         inputs['vmec']['target']['volume_constraint_type'] = 'min'
@@ -137,6 +152,9 @@ def set_default(inputs):
     if 'IL_length_weight' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_length_weight', out)
         inputs['cnt_coils']['target']['IL_length_weight'] = Weight(0) # Weight on IL length penalty
+    if 'IL_length_weight_iteration' not in inputs['cnt_coils']['target'].keys():
+        out = logprint('Setting default value for cnt_coils target IL_length_weight_iteration', out)
+        inputs['cnt_coils']['target']['IL_length_weight_iteration'] = False
     if 'IL_length_constraint_type' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_length_constraint_type', out)
         inputs['cnt_coils']['target']['IL_length_constraint_type'] = 'max' # Weight on IL length penalty
@@ -146,39 +164,51 @@ def set_default(inputs):
     if 'IL_msc_weight' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_msc_weight', out)
         inputs['cnt_coils']['target']['IL_msc_weight'] = Weight(0)       # Weight on IL mean curvature penalty
+    if 'IL_msc_weight_iteration' not in inputs['cnt_coils']['target'].keys():
+        out = logprint('Setting default value for cnt_coils target IL_msc_weight_iteration', out)
+        inputs['cnt_coils']['target']['IL_msc_weight_iteration'] = False
     if 'IL_maxc_threshold' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_maxc_threshold', out)
         inputs['cnt_coils']['target']['IL_maxc_threshold'] = 20          # Maximum local curvature of IL coils
     if 'IL_maxc_weight' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_maxc_weight', out)
         inputs['cnt_coils']['target']['IL_maxc_weight'] = Weight(0)      # Weight on IL local curvature penalty
-    if 'PF_current_threshold' not in inputs['cnt_coils']['target'].keys():
-        out = logprint('Setting default value for cnt_coils target PF_current_threshold', out)
-        inputs['cnt_coils']['target']['PF_current_threshold'] = 1E+9     # Maximum PF current value
-    if 'PF_current_weight' not in inputs['cnt_coils']['target'].keys():
-        out = logprint('Setting default value for cnt_coils target PF_current_weight', out)
-        inputs['cnt_coils']['target']['PF_current_weight'] = Weight(0)   # Weight on PF current penalty
+    if 'IL_maxc_weight_iteration' not in inputs['cnt_coils']['target'].keys():
+        out = logprint('Setting default value for cnt_coils target IL_maxc_weight_iteration', out)
+        inputs['cnt_coils']['target']['IL_maxc_weight_iteration'] = False
     if 'IL_maxR_threshold' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_maxR_threshold', out)
         inputs['cnt_coils']['target']['IL_maxR_threshold'] = 0.65
     if 'IL_maxR_weight' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_maxR_weight', out)
         inputs['cnt_coils']['target']['IL_maxR_weight'] = Weight(0)
+    if 'IL_maxR_weight_iteration' not in inputs['cnt_coils']['target'].keys():
+        out = logprint('Setting default value for cnt_coils target IL_maxR_weight_iteration', out)
+        inputs['cnt_coils']['target']['IL_maxR_weight_iteration'] = False
     if 'IL_maxZ_threshold' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_maxZ_threshold', out)
         inputs['cnt_coils']['target']['IL_maxZ_threshold'] = 0.75
     if 'IL_maxZ_weight' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_maxZ_weight', out)
         inputs['cnt_coils']['target']['IL_maxZ_weight'] = Weight(0)
+    if 'IL_maxZ_weight_iteration' not in inputs['cnt_coils']['target'].keys():
+        out = logprint('Setting default value for cnt_coils target IL_maxZ_weight_iteration', out)
+        inputs['cnt_coils']['target']['IL_maxZ_weight_iteration'] = False
     if 'IL_vessel_threshold' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_vessel_threshold', out)
         inputs['cnt_coils']['target']['IL_vessel_threshold'] = 0.16
     if 'IL_vessel_weight' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_vessel_weight', out)
         inputs['cnt_coils']['target']['IL_vessel_weight'] = Weight(0)
+    if 'IL_vessel_weight_iteration' not in inputs['cnt_coils']['target'].keys():
+        out = logprint('Setting default value for cnt_coils target IL_vessel_weight_iteration', out)
+        inputs['cnt_coils']['target']['IL_vessel_weight_iteration'] = False
     if 'arclength_weight' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for arc length weight', out)
         inputs['cnt_coils']['target']['arclength_weight'] = Weight(0)
+    if 'arclength_weight_iteration' not in inputs['cnt_coils']['target'].keys():
+        out = logprint('Setting default value for arc length weight iteration', out)
+        inputs['cnt_coils']['target']['arclength_weight_iteration'] = False
 
 
     # Winding angle
@@ -199,15 +229,24 @@ def set_default(inputs):
     if 'il_tor_weight' not in inputs['winding'].keys():
         out = logprint('Setting default value for il_tor_weight', out)
         inputs['winding']['il_tor_weight'] = Weight(0)
+    if 'il_tor_weight_iteration' not in inputs['winding'].keys():
+        out = logprint('Setting default value for il_tor_weight_iteration', out)
+        inputs['winding']['il_tor_weight_iteration'] = False
     if 'il_bincurv_weight' not in inputs['winding'].keys():
         out = logprint('Setting default value for il_bincurv_weight', out)
         inputs['winding']['il_bincurv_weight'] = Weight(0)
+    if 'il_bincurv_weight_iteration' not in inputs['winding'].keys():
+        out = logprint('Setting default value for il_bincurv_weight_iteration', out)
+        inputs['winding']['il_bincurv_weight_iteration'] = False
     if 'il_twist_max' not in inputs['winding'].keys():
         out = logprint('Setting default value for il_twist_max', out)
         inputs['winding']['il_twist_max'] = 0.5
     if 'il_twist_weight' not in inputs['winding'].keys():
         out = logprint('Setting default value for il_twist_weight', out)
         inputs['winding']['il_twist_weight'] = Weight(0)
+    if 'il_twist_weight_iteration' not in inputs['winding'].keys():
+        out = logprint('Setting default value for il_twist_weight_iteration', out)
+        inputs['winding']['il_twist_weight_iteration'] = False
 
         
     ## Windowpane coils related inputs
@@ -281,6 +320,15 @@ def set_default(inputs):
     # NUMERICS
     if 'numerics' not in inputs.keys():
         inputs['numerics'] = dict()
+    if 'weight_iteration_factor' not in inputs['numerics'].keys():
+        out = logprint('Setting default value for numerics weight_iteration_factor', out)
+        inputs['numerics']['weight_iteration_factor'] = 2 # NUmber of iteration for initial stage two optimization
+    if 'weight_margin' not in inputs['numerics'].keys():
+        out = logprint('Setting default value for numerics weight_margin', out)
+        inputs['numerics']['weight_margin'] = 0.1 # NUmber of iteration for initial stage two optimization
+    if 'MAXITER_weight_iteration' not in inputs['numerics'].keys():
+        out = logprint('Setting default value for numerics MAXITER_weight_iteration', out)
+        inputs['numerics']['MAXITER_weight_iteration'] = 100 # NUmber of iteration for initial stage two optimization
     if 'MAXITER_stage_2' not in inputs['numerics'].keys():
         out = logprint('Setting default value for numerics MAXITER_stage_2', out)
         inputs['numerics']['MAXITER_stage_2'] = 10 # NUmber of iteration for initial stage two optimization
