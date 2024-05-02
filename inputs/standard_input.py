@@ -97,6 +97,15 @@ inputs['wp_coils']['dofs']['name'] = ['zc(0)', 'zc(1)', 'zs(1)', 'phic(0)', 'phi
 
 # NUMERICS
 inputs['numerics'] = dict()
+
+inputs['numerics']['weight_iteration_factor'] = 2 # NUmber of iteration for initial 
+inputs['numerics']['weight_margin'] = 0.1 
+inputs['numerics']['MAXITER_weight_iteration_stage_II'] = 100 # NUmber of iteration 
+inputs['numerics']['MAXITER_weight_iteration_single_stage'] = 20 # NUmber of iteration 
+inputs['numerics']['number_weight_iteration_stage_II'] = 100 # NUmber of iteration for 
+inputs['numerics']['number_weight_iteration_single_stage'] = 0 # NUmber of iteration for initial stage two optimization
+
+
 inputs['numerics']['MAXITER_stage_2'] = 10 # NUmber of iteration for initial stage two optimization
 inputs['numerics']['MAXITER_single_stage'] = 10 # NUmber of iteration for combined optimization
 inputs['numerics']['fndiff_method'] = "forward" # Method to evaluate the finite differences. Either 'forward', 'centered', or 'backward'

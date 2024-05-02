@@ -68,6 +68,8 @@ with open( os.path.join(obsidian_path, fname), 'w') as file:
     file.write("  - csx\n")
     file.write("  - vmec_combined_approach\n")
     file.write("  - optimization/run\n")
+    file.write("aliases:\n")
+    file.write(f"  - OPT_{args.opt}\n")
     file.write(f'name: "{name}"\n')
     file.write(f'mean iota: "{mean_iota:.2E}"\n')
     file.write(f'fQS: "{fqs:.2E}"\n')
