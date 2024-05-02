@@ -3,6 +3,8 @@ runs
 jac_log_*
 __pycache__
 *_000_000000
+inputs/opt_*
+
 **/*.nc
 **/*.vts
 **/*.vtui

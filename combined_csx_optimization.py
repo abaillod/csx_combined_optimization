@@ -550,7 +550,7 @@ Jcoils = add_target( Jcoils, Jccdist, inputs['CC_WEIGHT'] )
 Jcsdist = CurveSurfaceDistance([il_curve], surf, inputs['CS_THRESHOLD'])
 Jcoils = add_target( Jcoils, Jcsdist, inputs['CS_WEIGHT'] ) 
 
-def fun_coils(dofs, info):
+def fun_coils(dofs, info, verbose=True):
     """Objective function for the stage II optimization
 
     Args:
@@ -585,7 +585,8 @@ def fun_coils(dofs, info):
                 outstr += f"WP_{i:d} length={l.J():.2f},  WP_{i:d} ∫ϰ²/L={msc.J():.2f},  WP_{i:d} ∫max(ϰ-ϰ0,0)^2={jcs.J():.2f}\n" 
             outstr += f"\n"
 
-        log_print(outstr)
+        if verbose:
+            log_print(outstr)
 
     return J, grad
 
@@ -736,7 +737,7 @@ def set_dofs(x0):
 
 # Define target function
 JACOBIAN_THRESHOLD = inputs['numerics']['JACOBIAN_THRESHOLD']
-def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
+def fun(dofs, prob_jacobian=None, info={'Nfeval':0}, verbose=True):
     info['Nfeval'] += 1
     coils_objective_weight = inputs['coils_objective_weight']
     
@@ -870,7 +871,8 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}):
         grad_with_respect_to_surface = np.ravel(prob_dJ) + coils_objective_weight.value * mixed_dJ
 
     # Print output string in log
-    log_print(outstr)
+    if verbose:
+        log_print(outstr)
 
     # Save pickle every 10 iterations
     if np.mod(info['Nfeval'],10)==1 and comm_world.rank==0:
@@ -965,7 +967,7 @@ if inputs['numerics']['number_weight_iteration_stage_II']>0:
   
         # Run quick stage II
         options={'maxiter': inputs['numerics']['MAXITER_weight_iteration_stage_II'], 'maxcor': 300}
-        res = minimize(fun_coils, dofs[:-ndof_vmec], jac=True, method='L-BFGS-B', args=({'Nfeval': 0}), options=options, tol=1e-12)
+        res = minimize(fun_coils, dofs[:-ndof_vmec], jac=True, method='L-BFGS-B', args=({'Nfeval': 0}, False), options=options, tol=1e-12)
         
     
         # Set satisfied to True; only False if one constraint is not satisfied
@@ -1141,7 +1143,7 @@ if inputs['numerics']['number_weight_iteration_single_stage']>0:
   
         # Run quick stage II
         options={'maxiter': inputs['numerics']['MAXITER_weight_iteration_single_stage'], 'maxcor': 300}
-        res = minimize(fun_coils, dofs[:-ndof_vmec], jac=True, method='L-BFGS-B', args=({'Nfeval': 0}), options=options, tol=1e-12)
+        res = minimize(fun_coils, dofs[:-ndof_vmec], jac=True, method='L-BFGS-B', args=({'Nfeval': 0}, False), options=options, tol=1e-12)
         
         # Set satisfied to True; only False if one constraint is not satisfied
         satisfied = True
