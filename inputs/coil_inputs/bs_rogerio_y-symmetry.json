@@ -4,13 +4,13 @@
   "@version": "1.4.1.dev123+g67a93426.d20240426",
   "graph": {
     "$type": "ref",
-    "value": "BiotSavart14"
+    "value": "BiotSavart31"
   },
   "simsopt_objs": {
-    "6095504384": {
+    "6391267584": {
       "@module": "simsopt._core.optimizable",
       "@class": "DOFs",
-      "@name": "6095504384",
+      "@name": "6391267584",
       "@version": "1.4.1.dev123+g67a93426.d20240426",
       "x": {
         "@module": "numpy",
@@ -31,6 +31,14 @@
           0.0,
           0.006620174181509779,
           0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           -0.44041002179496386,
           0.0,
           -0.07341620608296928,
@@ -44,6 +52,14 @@
           -0.0032179592277526304,
           0.0,
           0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.38584599255964136,
           0.0,
           -0.04393180332124254,
@@ -55,6 +71,14 @@
           0.01228160331962734,
           0.0,
           0.002887295762512917,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0
         ]
       },
@@ -72,6 +96,14 @@
         "xc(5)",
         "xs(6)",
         "xc(6)",
+        "xs(7)",
+        "xc(7)",
+        "xs(8)",
+        "xc(8)",
+        "xs(9)",
+        "xc(9)",
+        "xs(10)",
+        "xc(10)",
         "yc(0)",
         "ys(1)",
         "yc(1)",
@@ -85,6 +117,14 @@
         "yc(5)",
         "ys(6)",
         "yc(6)",
+        "ys(7)",
+        "yc(7)",
+        "ys(8)",
+        "yc(8)",
+        "ys(9)",
+        "yc(9)",
+        "ys(10)",
+        "yc(10)",
         "zc(0)",
         "zs(1)",
         "zc(1)",
@@ -97,7 +137,15 @@
         "zs(5)",
         "zc(5)",
         "zs(6)",
-        "zc(6)"
+        "zc(6)",
+        "zs(7)",
+        "zc(7)",
+        "zs(8)",
+        "zc(8)",
+        "zs(9)",
+        "zc(9)",
+        "zs(10)",
+        "zc(10)"
       ],
       "free": {
         "@module": "numpy",
@@ -117,7 +165,13 @@
           true,
           false,
           true,
-          false,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
           true,
           false,
           true,
@@ -130,7 +184,15 @@
           false,
           true,
           false,
+          true,
           false,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
           true,
           false,
           true,
@@ -142,7 +204,17 @@
           true,
           false,
           true,
-          false
+          false,
+          true,
+          false,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
         ]
       },
       "lower_bounds": {
@@ -150,6 +222,30 @@
         "@class": "array",
         "dtype": "float64",
         "data": [
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
+          -Infinity,
           -Infinity,
           -Infinity,
           -Infinity,
@@ -234,14 +330,38 @@
           Infinity,
           Infinity,
           Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
+          Infinity,
           Infinity
         ]
       }
     },
-    "CurveXYZFourier3": {
+    "CurveXYZFourier25": {
       "@module": "simsopt.geo.curvexyzfourier",
       "@class": "CurveXYZFourier",
-      "@name": "CurveXYZFourier3",
+      "@name": "CurveXYZFourier25",
       "@version": "1.4.1.dev123+g67a93426.d20240426",
       "quadpoints": {
         "@module": "numpy",
@@ -378,52 +498,28 @@
           0.9921875
         ]
       },
-      "order": 6,
+      "order": 10,
       "dofs": {
         "$type": "ref",
-        "value": "6095504384"
+        "value": "6391267584"
       }
     },
-    "RotatedCurve6": {
+    "RotatedCurve57": {
       "@module": "simsopt.geo.curve",
       "@class": "RotatedCurve",
-      "@name": "RotatedCurve6",
+      "@name": "RotatedCurve57",
       "@version": "1.4.1.dev123+g67a93426.d20240426",
       "curve": {
         "$type": "ref",
-        "value": "CurveXYZFourier3"
+        "value": "CurveXYZFourier25"
       },
       "phi": 1.5707963267948966,
       "flip": false
     },
-    "RotatedCurve7": {
-      "@module": "simsopt.geo.curve",
-      "@class": "RotatedCurve",
-      "@name": "RotatedCurve7",
-      "@version": "1.4.1.dev123+g67a93426.d20240426",
-      "curve": {
-        "$type": "ref",
-        "value": "RotatedCurve6"
-      },
-      "phi": -1.5707963267948966,
-      "flip": false
-    },
-    "RotatedCurve45": {
-      "@module": "simsopt.geo.curve",
-      "@class": "RotatedCurve",
-      "@name": "RotatedCurve45",
-      "@version": "1.4.1.dev123+g67a93426.d20240426",
-      "curve": {
-        "$type": "ref",
-        "value": "RotatedCurve7"
-      },
-      "phi": 1.5707963267948966,
-      "flip": true
-    },
-    "6095506400": {
+    "6084597984": {
       "@module": "simsopt._core.optimizable",
       "@class": "DOFs",
-      "@name": "6095506400",
+      "@name": "6084597984",
       "@version": "1.4.1.dev123+g67a93426.d20240426",
       "x": {
         "@module": "numpy",
@@ -469,7 +565,7 @@
       "current": 1.3553401268848062,
       "dofs": {
         "$type": "ref",
-        "value": "6095506400"
+        "value": "6084597984"
       }
     },
     "ScaledCurrent5": {
@@ -483,10 +579,36 @@
       },
       "scale": 125429.76971451295
     },
-    "ScaledCurrent45": {
+    "Coil66": {
+      "@module": "simsopt.field.coil",
+      "@class": "Coil",
+      "@name": "Coil66",
+      "@version": "1.4.1.dev123+g67a93426.d20240426",
+      "curve": {
+        "$type": "ref",
+        "value": "RotatedCurve57"
+      },
+      "current": {
+        "$type": "ref",
+        "value": "ScaledCurrent5"
+      }
+    },
+    "RotatedCurve61": {
+      "@module": "simsopt.geo.curve",
+      "@class": "RotatedCurve",
+      "@name": "RotatedCurve61",
+      "@version": "1.4.1.dev123+g67a93426.d20240426",
+      "curve": {
+        "$type": "ref",
+        "value": "CurveXYZFourier25"
+      },
+      "phi": 1.5707963267948966,
+      "flip": true
+    },
+    "ScaledCurrent85": {
       "@module": "simsopt.field.coil",
       "@class": "ScaledCurrent",
-      "@name": "ScaledCurrent45",
+      "@name": "ScaledCurrent85",
       "@version": "1.4.1.dev123+g67a93426.d20240426",
       "current_to_scale": {
         "$type": "ref",
@@ -494,74 +616,24 @@
       },
       "scale": -1.0
     },
-    "Coil34": {
+    "Coil67": {
       "@module": "simsopt.field.coil",
       "@class": "Coil",
-      "@name": "Coil34",
+      "@name": "Coil67",
       "@version": "1.4.1.dev123+g67a93426.d20240426",
       "curve": {
         "$type": "ref",
-        "value": "RotatedCurve45"
+        "value": "RotatedCurve61"
       },
       "current": {
         "$type": "ref",
-        "value": "ScaledCurrent45"
+        "value": "ScaledCurrent85"
       }
     },
-    "RotatedCurve8": {
-      "@module": "simsopt.geo.curve",
-      "@class": "RotatedCurve",
-      "@name": "RotatedCurve8",
-      "@version": "1.4.1.dev123+g67a93426.d20240426",
-      "curve": {
-        "$type": "ref",
-        "value": "RotatedCurve6"
-      },
-      "phi": 0.0,
-      "flip": true
-    },
-    "RotatedCurve9": {
-      "@module": "simsopt.geo.curve",
-      "@class": "RotatedCurve",
-      "@name": "RotatedCurve9",
-      "@version": "1.4.1.dev123+g67a93426.d20240426",
-      "curve": {
-        "$type": "ref",
-        "value": "RotatedCurve8"
-      },
-      "phi": -1.5707963267948966,
-      "flip": false
-    },
-    "RotatedCurve46": {
-      "@module": "simsopt.geo.curve",
-      "@class": "RotatedCurve",
-      "@name": "RotatedCurve46",
-      "@version": "1.4.1.dev123+g67a93426.d20240426",
-      "curve": {
-        "$type": "ref",
-        "value": "RotatedCurve9"
-      },
-      "phi": 1.5707963267948966,
-      "flip": true
-    },
-    "Coil35": {
-      "@module": "simsopt.field.coil",
-      "@class": "Coil",
-      "@name": "Coil35",
-      "@version": "1.4.1.dev123+g67a93426.d20240426",
-      "curve": {
-        "$type": "ref",
-        "value": "RotatedCurve46"
-      },
-      "current": {
-        "$type": "ref",
-        "value": "ScaledCurrent5"
-      }
-    },
-    "6096391136": {
+    "6087231712": {
       "@module": "simsopt._core.optimizable",
       "@class": "DOFs",
-      "@name": "6096391136",
+      "@name": "6087231712",
       "@version": "1.4.1.dev123+g67a93426.d20240426",
       "x": {
         "@module": "numpy",
@@ -909,10 +981,10 @@
         ]
       }
     },
-    "CurveXYZFourier4": {
+    "CurveXYZFourier8": {
       "@module": "simsopt.geo.curvexyzfourier",
       "@class": "CurveXYZFourier",
-      "@name": "CurveXYZFourier4",
+      "@name": "CurveXYZFourier8",
       "@version": "1.4.1.dev123+g67a93426.d20240426",
       "quadpoints": {
         "@module": "numpy",
@@ -1124,13 +1196,13 @@
       "order": 10,
       "dofs": {
         "$type": "ref",
-        "value": "6096391136"
+        "value": "6087231712"
       }
     },
-    "6096391616": {
+    "6087232192": {
       "@module": "simsopt._core.optimizable",
       "@class": "DOFs",
-      "@name": "6096391616",
+      "@name": "6087232192",
       "@version": "1.4.1.dev123+g67a93426.d20240426",
       "x": {
         "@module": "numpy",
@@ -1176,7 +1248,7 @@
       "current": 1.0,
       "dofs": {
         "$type": "ref",
-        "value": "6096391616"
+        "value": "6087232192"
       }
     },
     "ScaledCurrent7": {
@@ -1197,7 +1269,7 @@
       "@version": "1.4.1.dev123+g67a93426.d20240426",
       "curve": {
         "$type": "ref",
-        "value": "CurveXYZFourier4"
+        "value": "CurveXYZFourier8"
       },
       "current": {
         "$type": "ref",
@@ -1211,7 +1283,7 @@
       "@version": "1.4.1.dev123+g67a93426.d20240426",
       "curve": {
         "$type": "ref",
-        "value": "CurveXYZFourier4"
+        "value": "CurveXYZFourier8"
       },
       "phi": 0.0,
       "flip": true
@@ -1241,19 +1313,19 @@
         "value": "ScaledCurrent8"
       }
     },
-    "BiotSavart14": {
+    "BiotSavart31": {
       "@module": "simsopt.field.biotsavart",
       "@class": "BiotSavart",
-      "@name": "BiotSavart14",
+      "@name": "BiotSavart31",
       "@version": "1.4.1.dev123+g67a93426.d20240426",
       "coils": [
         {
           "$type": "ref",
-          "value": "Coil34"
+          "value": "Coil66"
         },
         {
           "$type": "ref",
-          "value": "Coil35"
+          "value": "Coil67"
         },
         {
           "$type": "ref",
