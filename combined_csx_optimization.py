@@ -461,7 +461,14 @@ class LpCurveZ(Optimizable):
 # boundary. Here, we only include coils penalty function and attempt at minimizing the quadratic
 # flux across VMEC boundary.
 square_flux = SquaredFlux(surf, bs, definition="local")
-Jcoils = square_flux
+square_flux_threshold = inputs['cnt_coils']['target']['square_flux_threshold']
+square_flux_penalty_type = inputs['cnt_coils']['target']['square_flux_constraint_type']
+if square_flux_penalty_type=='objective':
+    Jcoils = square_flux
+elif square_flux_penalty_type=='max':
+    Jcoils = QuadraticPenalty( square_flux, square_flux_threshold, 'max' )
+else:
+    raise ValueError('Invalid square flux penalty type')
 
 def add_target(Jcoils, J, w):
     # This is a small wrapper to avoid adding some 0*J() to the target function.

@@ -146,6 +146,12 @@ def set_default(inputs):
     
     if 'target' not in inputs['cnt_coils'].keys():
         inputs['cnt_coils']['target'] = dict()
+    if 'square_flux_threshold' not in inputs['cnt_coils']['target'].keys():
+        out = logprint('Setting default value for cnt_coils target square flux threshold', out)
+        inputs['cnt_coils']['target']['square_flux_threshold'] = 1e-7
+    if 'square_flux_penalty_type' not in inputs['cnt_coils']['target'].keys():
+        out = logprint('Setting default value for cnt_coils target square flux penalty type', out)
+        inputs['cnt_coils']['target']['square_flux_constraint_type'] = 'objective'
     if 'IL_length' not in inputs['cnt_coils']['target'].keys():
         out = logprint('Setting default value for cnt_coils target IL_length', out)
         inputs['cnt_coils']['target']['IL_length'] = 3                   # Maximum length for IL coils
