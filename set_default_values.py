@@ -118,6 +118,12 @@ def set_default(inputs):
     if 'volume_constraint_type' not in inputs['vmec']['target'].keys():
         out = logprint('Setting default value for vmec volume_constraint_type', out)
         inputs['vmec']['target']['volume_constraint_type'] = 'min'
+
+    if 'magnetic_well_weight' not in inputs['vmec']['target']:
+        out = logprint('Setting default value for vmec magnetic_well_weight', out)
+        inputs['vmec']['target']['magnetic_well_weight'] = Weight(0)
+
+    
  
 
     # COILS

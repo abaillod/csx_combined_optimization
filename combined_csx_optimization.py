@@ -39,7 +39,7 @@ from scipy.optimize import minimize
 from simsopt._core import Optimizable
 from simsopt.util import MpiPartition
 from simsopt._core.derivative import Derivative
-from simsopt.mhd import Vmec, QuasisymmetryRatioResidual
+from simsopt.mhd import Vmec, QuasisymmetryRatioResidual, WellWeighted
 from simsopt._core.finite_difference import MPIFiniteDifference
 from simsopt.field import BiotSavart, Current, coils_via_symmetries, apply_symmetries_to_curves
 from simsopt.objectives import SquaredFlux, QuadraticPenalty, LeastSquaresProblem, Weight
@@ -673,6 +673,9 @@ J_aspect = inputs['vmec']['target']['aspect_ratio_weight'] * QuadraticPenalty(re
 J_qs = QuadraticPenalty(quasisymmetry(qs), 0, 'identity') 
 J_volume =  inputs['vmec']['target']['volume_weight'] * QuadraticPenalty( volume( surf ),  inputs['vmec']['target']['volume'],  inputs['vmec']['target']['volume_constraint_type'] )
 
+weight1 = lambda s: np.exp(-s**2/0.01**2)
+weight2 = lambda s: np.exp(-(1-s)**2/0.01**2)
+J_well = inputs['vmec']['target']['magnetic_well_weight'] * WellWeighted( vmec, weight1, weight2 )
 
 Jplasma = J_qs
 # Only add targets with non-zero weight.
@@ -682,6 +685,8 @@ if inputs['vmec']['target']['aspect_ratio_weight'].value>0:
     Jplasma += J_aspect
 if inputs['vmec']['target']['volume_weight'].value>0:
     Jplasma += J_volume
+if inputs['vmec']['target']['magnetic_well_weight'].value>0:
+    Jplasma += J_well
 
 
 
