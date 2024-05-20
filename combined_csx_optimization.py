@@ -665,7 +665,22 @@ class volume(Optimizable):
             with open(os.path.join(this_path, 'log.txt'), 'a') as f:
                 f.write(f"Error evaluating Volume! ")
             return np.nan
-            
+    
+class IntervalWell(Optimizable):
+    def __init__(self, vmec, smin, smax):
+        self.vmec = vmec
+        self.smin = smin
+        self.smax = smax
+        self.depends_on = ['vmec']
+    def J(self):
+        self.vmec.run()
+        smax = self.smax
+        smin = self.smin
+        dVds = 4 * np.pi * np.pi * np.abs(self.vmec.wout.gmnc.T[1:, 0])
+        dVds_interp = interp1d(self.vmec.s_half_grid, dVds, fill_value='extrapolate')
+        d2_V_d_s2_avg = (dVds_interp(smax) - dVds_interp(smin)) / (smax - smin)
+        interval_well = -d2_V_d_s2_avg / (0.5 * (dVds_interp(smax) + dVds_interp(smin)))
+        return interval_well        
 
 
 J_iota = inputs['vmec']['target']['iota_weight'] * QuadraticPenalty(remake_iota(vmec), inputs['vmec']['target']['iota'], inputs['vmec']['target']['iota_constraint_type'])
@@ -673,9 +688,12 @@ J_aspect = inputs['vmec']['target']['aspect_ratio_weight'] * QuadraticPenalty(re
 J_qs = QuadraticPenalty(quasisymmetry(qs), 0, 'identity') 
 J_volume =  inputs['vmec']['target']['volume_weight'] * QuadraticPenalty( volume( surf ),  inputs['vmec']['target']['volume'],  inputs['vmec']['target']['volume_constraint_type'] )
 
-weight1 = lambda s: np.exp(-s**2/0.01**2)
-weight2 = lambda s: np.exp(-(1-s)**2/0.01**2)
-J_well = inputs['vmec']['target']['magnetic_well_weight'] * WellWeighted( vmec, weight1, weight2 )
+if inputs['vmec']['target']['magnetic_well_type']=='weighted':
+    weight1 = lambda s: np.exp(-s**2/0.01**2)
+    weight2 = lambda s: np.exp(-(1-s)**2/0.01**2)
+    J_well = inputs['vmec']['target']['magnetic_well_weight'] * WellWeighted( vmec, weight1, weight2 )
+elif inputs['vmec']['target']['magnetic_well_type']=='standard':
+    J_well =IntervalWell(vmec, 0.2, 0.4) + IntervalWell(vmec, 0.8, 0.99)
 
 Jplasma = J_qs
 # Only add targets with non-zero weight.

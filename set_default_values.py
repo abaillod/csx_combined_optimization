@@ -122,7 +122,9 @@ def set_default(inputs):
     if 'magnetic_well_weight' not in inputs['vmec']['target']:
         out = logprint('Setting default value for vmec magnetic_well_weight', out)
         inputs['vmec']['target']['magnetic_well_weight'] = Weight(0)
-
+    if 'magnetic_well_type' not in inputs['vmec']['target']:
+        out = logprint('Setting default value for vmec magnetic_well_type', out)
+        inputs['vmec']['target']['magnetic_well_type']=='standard'
     
  
 
