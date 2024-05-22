@@ -671,7 +671,7 @@ class IntervalWell(Optimizable):
         self.vmec = vmec
         self.smin = smin
         self.smax = smax
-        self.depends_on = ['vmec']
+        super().__init__(depends_on = [vmec])
     def J(self):
         self.vmec.run()
         smax = self.smax
