@@ -36,6 +36,7 @@ from pystellplot.Paraview import coils_to_vtk, surf_to_vtk
 from simsopt.field.biotsavart import BiotSavart
 from simsopt._core.optimizable import load
 from scipy.optimize import minimize
+from scipy.interpolate import interp1d
 from simsopt._core import Optimizable
 from simsopt.util import MpiPartition
 from simsopt._core.derivative import Derivative
