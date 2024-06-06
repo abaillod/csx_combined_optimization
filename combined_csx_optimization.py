@@ -44,7 +44,7 @@ from simsopt.mhd import Vmec, QuasisymmetryRatioResidual, WellWeighted
 from simsopt._core.finite_difference import MPIFiniteDifference
 from simsopt.field import BiotSavart, Current, coils_via_symmetries, apply_symmetries_to_curves
 from simsopt.objectives import SquaredFlux, QuadraticPenalty, LeastSquaresProblem, Weight
-from simsopt.geo import CurveLength, CurveCurveDistance, MeanSquaredCurvature,  LpCurveCurvature, ArclengthVariation, curves_to_vtk, create_equally_spaced_curves, create_equally_spaced_windowpane_curves, CurveSurfaceDistance
+from simsopt.geo import CurveLength, CurveCurveDistance, MeanSquaredCurvature,  LpCurveCurvature, ArclengthVariation, curves_to_vtk, create_equally_spaced_curves,  CurveSurfaceDistance
 from simsopt.geo.orientedcurve import OrientedCurveXYZFourier
 from simsopt.field.coilobjective import CurrentPenalty
 from simsopt.field.coil import apply_symmetries_to_currents, ScaledCurrent
