@@ -768,8 +768,7 @@ def set_dofs(x0):
 
 # Define target function
 JACOBIAN_THRESHOLD = inputs['numerics']['JACOBIAN_THRESHOLD']
-def fun(dofs, prob_jacobian=None, info={'Nfeval':0}, verbose=True):
-    info['Nfeval'] += 1
+def callbackF(dofs, prob_jacobian=None, info={'Nfeval':0}, verbose=True):
     coils_objective_weight = inputs['coils_objective_weight']
     
     # Set the dofs
@@ -888,6 +887,69 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}, verbose=True):
         outputs['dJplasma'].append(prob_dJ)
         outputs['dJcoils'].append(coils_dJ)
     
+        # Evaluate how Jcoil varies w.r.t the surface dofs
+        dJdx = (B_n/mod_Bcoil**2)[:, :, None] * (np.sum(dB_by_dX*(n-B*(B_N/mod_Bcoil**2)[:, :, None])[:, :, None, :], axis=3))
+        dJdN = (B_n/mod_Bcoil**2)[:, :, None] * B_diff - 0.5 * (B_N**2/absn**3/mod_Bcoil**2)[:, :, None] * n
+        deriv = surf.dnormal_by_dcoeff_vjp(dJdN/(nphi_VMEC*ntheta_VMEC)) \
+              + surf.dgamma_by_dcoeff_vjp(dJdx/(nphi_VMEC*ntheta_VMEC))
+        grad_with_respect_to_coils = coils_objective_weight.value * coils_dJ
+        mixed_dJ = Derivative({surf: deriv})(surf)
+        
+        ## Put both gradients together
+        grad_with_respect_to_surface = np.ravel(prob_dJ) + coils_objective_weight.value * mixed_dJ
+
+    # Print output string in log
+    if verbose:
+        log_print(outstr)
+
+    # Save pickle every 10 iterations
+    with open(os.path.join(this_path, 'outputs.pckl'), 'wb') as f:
+        pickle.dump( outputs, f )
+    
+    grad = np.concatenate((grad_with_respect_to_coils,grad_with_respect_to_surface))
+    outputs['dJ'].append(grad)
+
+def fun(dofs, prob_jacobian=None, info={'Nfeval':0}, verbose=True):
+    info['Nfeval'] += 1
+    coils_objective_weight = inputs['coils_objective_weight']
+    
+    # Set the dofs
+    set_dofs(dofs)
+    
+    # Evaluate target function
+    os.chdir(vmec_results_path)
+    J_stage_1 = Jplasma.J()
+    J_stage_2 = coils_objective_weight.value * Jcoils.J()
+    J = J_stage_1 + J_stage_2
+        
+    if J > inputs['numerics']['JACOBIAN_THRESHOLD'] or np.isnan(J):
+        log_print(f"Exception caught during function evaluation with J={J}. Returning J={JACOBIAN_THRESHOLD}\n")
+        J = JACOBIAN_THRESHOLD
+        grad_with_respect_to_surface = [0] * ndof_vmec
+    
+    else:
+        # Evaluate important metrics    
+        n = surf.normal() # Plasma boundary normal
+        absn = np.linalg.norm(n, axis=2) 
+        
+        nphi_VMEC = surf.quadpoints_phi.size
+        ntheta_VMEC = surf.quadpoints_theta.size
+        B = bs.B().reshape((nphi_VMEC, ntheta_VMEC, 3))
+        dB_by_dX = bs.dB_by_dX().reshape((nphi_VMEC, ntheta_VMEC, 3, 3))
+        
+        Bcoil = bs.B().reshape(n.shape)
+        unitn = n / absn[:, :, None]
+        B_n = np.sum(Bcoil*unitn, axis=2)     # This is B.n/|n|
+        mod_Bcoil = np.linalg.norm(Bcoil, axis=2) # This is |B|
+        B_diff = Bcoil
+        B_N = np.sum(Bcoil * n, axis=2) # This is B.n
+
+        # Evaluate Jacobian - this is some magic math copied from Rogerio's code
+        prob_dJ = prob_jacobian.jac(Jplasma.x)[0] # finite differences
+        coils_dJ = Jcoils.dJ() # Analytical
+        outputs['dJplasma'].append(prob_dJ)
+        outputs['dJcoils'].append(coils_dJ)
+    
         assert square_flux.definition == "local" #??
     
         # Evaluate how Jcoil varies w.r.t the surface dofs
@@ -905,11 +967,6 @@ def fun(dofs, prob_jacobian=None, info={'Nfeval':0}, verbose=True):
     if verbose:
         log_print(outstr)
 
-    # Save pickle every 10 iterations
-    if np.mod(info['Nfeval'],10)==1 and comm_world.rank==0:
-        with open(os.path.join(this_path, 'outputs.pckl'), 'wb') as f:
-            pickle.dump( outputs, f )
-    
     grad = np.concatenate((grad_with_respect_to_coils,grad_with_respect_to_surface))
     outputs['dJ'].append(grad)
 
@@ -979,127 +1036,6 @@ dofs = np.concatenate((Jcoils.x, vmec.x))
 x0 = np.copy(dofs) # Make a copy of dofs for weight iterations
 ndof_vmec = int(len(vmec.boundary.x))
 
-# Coil weight iteration
-if inputs['numerics']['number_weight_iteration_stage_II']>0:
-    satisfied = False
-    counter = 0
-    factor = inputs['numerics']['weight_iteration_factor']
-    margin = inputs['numerics']['weight_margin']
-    
-    # Print in log
-    log_print("Starting iteration on penalty weights... \n\n")
-    while not satisfied and counter<inputs['numerics']['number_weight_iteration_stage_II']:
-        counter += 1
-        log_print(f"Weight iteration #{counter}...\n")
-        
-        # Re-initialize dofs
-        set_dofs( x0 )
-        dofs = np.concatenate((Jcoils.x, vmec.x))
-  
-        # Run quick stage II
-        options={'maxiter': inputs['numerics']['MAXITER_weight_iteration_stage_II'], 'maxcor': 300}
-        res = minimize(fun_coils, dofs[:-ndof_vmec], jac=True, method='L-BFGS-B', args=({'Nfeval': 0}, False), options=options, tol=1e-12)
-        
-    
-        # Set satisfied to True; only False if one constraint is not satisfied
-        satisfied = True
-        
-        # Evaluate targets and modify weights
-        if inputs['CS_WEIGHT_iteration']:
-            csdist = Jcsdist.shortest_distance()
-            if csdist < (1-margin) * inputs['CS_THRESHOLD']:
-                inputs['CS_WEIGHT'] *= factor
-                satisfied = False
-                log_print(f'CS shortest distance is {csdist:.2E}. Increasing weight...\n')
-
-        if inputs['CC_WEIGHT_iteration']:
-            ccdist = Jccdist.shortest_distance()
-            if ccdist < (1-margin) * inputs['CC_THRESHOLD']:
-                inputs['CS_WEIGHT'] *= factor
-                satisfied = False
-                log_print(f'CS shortest distance is {ccdist:.2E}. Increasing weight...\n')
-
-        
-        if inputs['cnt_coils']['target']['IL_length_weight_iteration']:
-            ll = il_length.J()
-            if ll > (1+margin) * il_length_target:
-                il_length_weight *= facotr
-                satisfied = False
-                log_print(f'IL length is {ll:.2E}. Increasing weight...\n')
-
-        if inputs['cnt_coils']['target']['IL_msc_weight_iteration']:
-            msc = il_msc.J()
-            if msc > (1+margin) * il_msc_threshold:
-                il_msc_weight *= factor
-                satisfied = False
-                log_print(f'IL mean sqaure curvature is {msc:.2E}. Increasing weight...\n')
-
-
-        if inputs['cnt_coils']['target']['IL_maxc_weight_iteration']:
-            maxc = np.max(il_curve.kappa())
-            if maxc > (1+margin) * il_curvature_threshold:
-                il_curvature_weight *= factor
-                satisfied = False
-                log_print(f'IL max curvature is {maxc:.2E}. Increasing weight...\n')
-
-
-        if inputs['cnt_coils']['target']['IL_maxR_weight_iteration']:
-            g = il_curve.gamma()
-            maxr = np.max(np.sqrt(g[:,1]**2 + g[:,2]**2))
-            if maxr > (1+margin) * il_curveR_threshold:
-                il_curveR_weight *= factor
-                satisfied = False
-                log_print(f'IL max R is {maxr:.2E}. Increasing weight...\n')
-                
-        if inputs['cnt_coils']['target']['IL_maxZ_weight_iteration']:
-            g = il_curve.gamma()
-            maxz = np.max(np.abs(g[:,0]))
-            if maxz > (1+margin) * il_curveZ_threshold:
-                il_curveZ_weight *= factor
-                satisfied = False
-                log_print(f'IL max Z is {maxz:.2E}. Increasing weight...\n')
-
-        if inputs['cnt_coils']['target']['IL_vessel_weight_iteration']:
-            min_coil_vessel_distance = vpenalty.minimum_distances()[0]
-            if min_coil_vessel_distance < (1-margin) * il_vessel_threshold:
-                il_vessel_weight *= factor
-                satisfied = False
-                log_print(f'IL min distance to vessel is {min_coil_vessel_distance:.2E}. Increasing weight...\n')
-
-        if inputs['winding']['il_tor_weight_iteration']:
-            torsional_strain = fc.torsional_strain()
-            if torsional_strain > (1+margin)*inputs['winding']['tor_threshold']:
-                il_tor_weight *= factor
-                satisfied = False
-                log_print(f'Torsional strain is {torsional_strain:.2E}. Increasing weight...\n')
-
-        if inputs['winding']['il_bincurv_weight_iteration']:
-            binormal_curvature_strain = fc.binormal_curvature_strain()
-            if binormal_curvature_strain > (1+margin) * inputs['winding']['cur_threshold']:
-                il_bincurv_weight *= factor
-                satisfied = False
-                log_print(f'Binormal curvature strain is {binormal_curvature_strain:.2E}. Increasing weight...\n')
-
-
-        if inputs['winding']['il_twist_weight_iteration']:
-            tw = twist.J()
-            if tw > (1+margin) * inputs['winding']['il_twist_max']:
-                il_twist_weight *= factor
-                satisfied = False
-                log_print(f'Twist penalty is {tw:.2E}. Increasing weight...\n')
-
-
-        if satisfied:
-            log_print('All penalties are satisfied! Saving weights...\n')
-
-            if comm_world.rank == 0: 
-                with open(os.path.join(this_path, 'input_updated_weights.pckl'), 'wb') as f:
-                    pickle.dump(inputs, f)
-
-
-        log_print('\n')
-        
-
 # Run the stage II optimization
 if inputs['numerics']['MAXITER_stage_2'] > 0:
     log_print('Starting stage II optimization...')
@@ -1155,64 +1091,6 @@ if comm_world.rank == 0:
     log_print("\n")
 
 
-# Iterate on weights
-if inputs['numerics']['number_weight_iteration_single_stage']>0:
-    satisfied = False
-    counter = 0
-    factor = inputs['numerics']['weight_iteration_factor']
-    margin = inputs['numerics']['weight_margin']
-    
-    # Print in log
-    log_print("Starting iteration on penalty weights... \n\n")
-    while not satisfied and counter<inputs['numerics']['number_weight_iteration_single_stage']:
-        counter += 1
-        log_print(f"Weight iteration #{counter}...\n")
-        
-        # Re-initialize dofs
-        set_dofs( x0 )
-        dofs = np.concatenate((Jcoils.x, vmec.x))
-  
-        # Run quick stage II
-        options={'maxiter': inputs['numerics']['MAXITER_weight_iteration_single_stage'], 'maxcor': 300}
-        res = minimize(fun_coils, dofs[:-ndof_vmec], jac=True, method='L-BFGS-B', args=({'Nfeval': 0}, False), options=options, tol=1e-12)
-        
-        # Set satisfied to True; only False if one constraint is not satisfied
-        satisfied = True
-
-        if inputs['vmec']['target']['aspect_ratio_weight_iteration']:
-            a = vmec.aspect()
-            if a > inputs['vmec']['target']['aspect_ratio'] * (1+margin):
-                inputs['vmec']['target']['aspect_ratio_weight'] *= factor
-                satisfied = False
-                log_print(f"Aspect ratio is {a:.2E}, increasing weights...\n")
-
-        
-        if inputs['vmec']['target']['iota_weight_iteration']:
-            mean_iota = vmec.mean_iota()
-            if mean_iota < inputs['vmec']['target']['iota'] * (margin+1):
-                inputs['vmec']['target']['iota_weight'] *= factor
-                satisfied = False
-                log_print(f"Mean iota is {mean_iota:.2E}, increasing weights...\n")
-
-
-        if inputs['vmec']['target']['volume_weight_iteration']:
-            volume = vmec.volume()
-            if volume < inputs['vmec']['target']['volume'] * (1+margin):
-                inputs['vmec']['target']['volume_weight'] *= factor
-                satisfied = False
-                log_print(f"Volume is {volume:.2E}, increasing weights...\n")
-                
-        if satisfied:
-            log_print('All penalties are satisfied! Saving weights...\n')
-
-            if comm_world.rank == 0: 
-                with open(os.path.join(this_path, 'input_updated_weights_2.pckl'), 'wb') as f:
-                    pickle.dump(inputs, f)
-
-
-        log_print('\n')                
-
-
 myeps = [1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7]
 if inputs['numerics']['taylor_test']:
     np.random.seed(1)
@@ -1245,6 +1123,10 @@ diff_method = inputs['numerics']['fndiff_method']
 finite_difference_abs_step = inputs['numerics']['finite_difference_abs_step'] 
 finite_difference_rel_step = inputs['numerics']['finite_difference_rel_step'] 
 with MPIFiniteDifference(Jplasma.J, mpi, diff_method=diff_method, abs_step=finite_difference_abs_step, rel_step=finite_difference_rel_step) as prob_jacobian:
+
+    info = dict({'Nfeval': 0})
+    callback = lambda x: callbackF(x, prob_jacobian, info)
+
     if mpi.proc0_world:
         # Taylor test - coils            
         fpl = lambda x, info: fun_plasma(x, prob_jacobian, info)
@@ -1263,7 +1145,7 @@ with MPIFiniteDifference(Jplasma.J, mpi, diff_method=diff_method, abs_step=finit
             outputs['taylor_test']['initial']['Jtotal'] = taylor_test(fun, dofs, h)
             
         # -------------------------------------------------------------------------------------
-        outputs['result'] = minimize(fun, dofs, args=(prob_jacobian, {'Nfeval': 0}), jac=True, method='BFGS', options={'maxiter': inputs['numerics']['MAXITER_single_stage']}, tol=1e-12)    
+        outputs['result'] = minimize(fun, dofs, callback=callback, args=(prob_jacobian, info), jac=True, method=inputs['numerics']['algorithm'], options={'maxiter': inputs['numerics']['MAXITER_single_stage']}, tol=1e-12)    
 
         res = outputs['result']
         log_print(f"Number of iterations: {res.nit}\n")
